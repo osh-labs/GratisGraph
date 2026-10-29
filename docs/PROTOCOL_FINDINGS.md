@@ -3,7 +3,7 @@
 **Licence:** GPL v3
 **Target:** M20 machine USB protocol & binary format
 **Vendor driver (Windows):** GT Smartstream 4.06 (Gravograph)
-**Last updated:** Session 11 — execution model confirmed, counted-packet framing, !JF semantics
+**Last updated:** 2026-10-28 — M20 IQ header model_code; Gravostyle 7 static analysis (full opcode vocabulary, Point&Shoot)
 **Status:** 🟢 Protocol fully confirmed — G-Code → GTS binary → USB working end-to-end
 
 > **Note:** the normative wire-format reference is now [`GTS_FORMAT.md`](GTS_FORMAT.md).
@@ -111,6 +111,9 @@ Full normative specification: [`GTS_FORMAT.md`](GTS_FORMAT.md). Research notes:
 - Emitting `JF` per stroke stops the machine after the first stroke.
 - The ASCII `!PS/!OR/!MM` envelope is a Windows print-path artefact consumed by
   the spooler stack — it never reaches the wire on the direct USB path.
+  (Separately, the vendor's bidirectional driver sends counted `!PS 20;` and
+  `!DL 4;` commands for Point&Shoot. Those are machine commands, not the print
+  envelope. See the Gravostyle 7 section below.)
 
 ### Stroke-header semantics — RESOLVED: RELATIVE (2026-06-09)
 
@@ -154,7 +157,7 @@ never matched. Fixed 2026-06-09.)
 | `0x0206` | M20 Jewel | M20_PROFILE |
 | `0x0207` | M20 PIX | M20_PROFILE |
 | `0x0209` | M20 Jewel 2 | M20_PROFILE |
-| `0x020D` | M20 IQ | M20_PROFILE |
+| `0x020D` | M20 IQ | M20_PROFILE — **live: identifies and queues jobs** (prog 1.81, 2026-10-28; needs header model_code, execution not yet confirmed) |
 | `0x020E` | M20 XL IQ | M20_PROFILE |
 | `0x020F` | M20 Jewel IQ | M20_PROFILE |
 | `0x0202` | M40 | M40_PROFILE |
@@ -207,6 +210,7 @@ comprehension bottleneck.
 |----------|------|------|
 | K2000 (M20 std) | v1.1 | v2.46 |
 | Sirius (M20 Express) | v1.2 | v1.30 |
+| Sirius (M20 IQ, live 2026-10-28) | v1.2 | v1.81 |
 | IM4E | v1.2 | v2.19 |
 
 ---
@@ -246,6 +250,122 @@ Open from these captures: the `13` (PZ 100 / 0.99") capture is anomalously
 large (~500KB job) — not yet explained; `!1B` semantics; whether PZ has real
 Z effect on our hardware across its range.
 
+## M20 IQ on Linux (2026-10-28)
+
+First live session on an **M20 IQ** (model_code 0x020D, platform 4,
+boot 1.2 / prog 1.81) with rotary spindle and red laser pointer. It identified
+and selected M20_PROFILE without changes, unprivileged on Linux behind a udev
+rule (the kernel's `usblp` detaches cleanly).
+
+**Header model_code is enforced.** Jobs built with the Express's `02 04` at
+header offset 0x24 got a `!JF 0;` receipt ack but no beep, and green did
+nothing. The same homing job with `02 0D` at 0x24 beeped twice, and the
+machine also sent `!ME`, `!CM 4;` (value 1), and `!ET 4;` (value 1), which
+the rejected job never produced. `send_gts` now stamps the identified
+model_code into 0x24. Engrave-job execution on the IQ is not yet confirmed.
+
+Also observed: after the rejected jobs, the motion monitor treated repeated
+idle `!MY` status (Y holding at 46.17 mm) as motion and reported "done". The
+completion heuristic was characterised on the Express and does not hold on
+the IQ.
+
+---
+
+## Gravostyle 7 Static Analysis (2026-10-28)
+
+**Method.** Read-only static analysis of the Gravostyle 7 Build 6 install
+media (2015) for interoperability. Nothing was executed. The sources were:
+plain-text post-processors (`POSTPROGS/*.MAC`), the US manual, and two DLLs
+unpacked from the InstallShield cab:
+
+- `mac_bin_gii_2d.dll`, the job writer. Opcodes were enumerated from the
+  emit call sites. The DLL has a built-in text-trace mode whose format strings
+  name several opcodes and header fields, and each function names itself in
+  an error string (`UsiSendGoToProf`, `UsiStartAux`, …).
+- `DriverGravoDLL.dll`, the bidirectional machine manager. Its exports carry
+  method names (`CmdPointAndShootPlaque`, `SetPointeurRouge`, …).
+
+Only facts are recorded here, no vendor code. None of the *vendor* findings
+have been seen on the wire yet. Treat them as strong leads, not confirmation.
+
+**Header model_code confirmed independently.** `G2_M20.MAC` has
+`IdMachine=516` (0x0204), and `G2_M20_IQ.MAC` has `IdMachine=525` (0x020D).
+
+**Opcode roles.** The job writer's internal function names (French) group
+the opcodes:
+
+| Vendor function | Meaning | Opcodes |
+|---|---|---|
+| `UsiSendGoToProf` | go to depth | `ZA` then `PD 0` |
+| `UsiSendDegZentrePasse` | Z clearance between passes | `PU 0` |
+| `UsiSendDegZsecurite` | Z safety height | `PU 1` |
+| `UsiSendElemForSliceCur` | per-pass parameters | `VD VZ PZ VS VZ DZ` (+ `DR` if non-zero) |
+| `UsiStartAux` / `UsiStopAux` | auxiliaries | `MC` (spindle), `OU` (outputs) |
+| `UsiSetTypeDepl` | movement type | `2D` / `3D`, or `V2` after raster |
+| `UsiSendMessage` | LCD message | `LB 0`, `LB <2 chars>`…, `NR 1`, `LB 1` |
+
+Other opcodes and what ties them to their meaning:
+
+- `VR`: only when `WithSpindleSpeed=1`, so spindle RPM.
+- `TO n`: next to the "Turret position is [%d]" check, so the tool-changer turret position.
+- `OP 0`: follows the explicit move to the plate (`ExplicitMoveULplate` + `AddCdeOP`) or table (`…table` + `AddCdeOT`) corner, so it sets the origin.
+- `BD 0/1`: trace text says "Braille dispenser UP/DOWN".
+- `ME n`: a counter emitted only for `TestMode` 1/3 (border tests).
+- `RX`/`RY`/`C3`/`C4`/`PW`: only in the photo-raster path (8-bit bitmap library calls).
+
+The complete table is in GTS_FORMAT.md §5.3. The trace mode labels segment
+records `MOVE RATIO DANG DX DY [DZ]`, and has a separate `CIRC` record
+(native arcs), whose layout is unmapped.
+
+**Header variants.** Gravostyle 7 writes `!AS n;` (no photo mode) or
+`!PH 72;` (`ModePH=1`, which includes the M20 IQ) instead of Quick's
+`!MM88;`. Layouts are in GTS_FORMAT.md §5.7.
+
+**Point&Shoot and the red pointer.** The post-processor has `RedLaserOk=1`
+("laser pointer present") on the M20 IQ. The manual's Point&Shoot (set plate,
+line or origin by jogging the red pointer) is implemented by
+`CGestMacBidiGii::CmdPointAndShootPlaque/Ligne/NouvelleOrigine`, which send
+`!DL 4;` + model_code, then `!PS 20;` + five int32 BE fields. The field
+setters are exported:
+
+| Field | Setter |
+|---|---|
+| 1. model_code | from `!ID` |
+| 2. accessory type | `SetTypeAccessoire` |
+| 3. accessory diameter | `SetDiametreAccess` |
+| 4. red pointer | `SetPointeurRouge` |
+| 5. Point&Shoot method | `SetMethodePS` |
+
+Cancel is `!1B 0;`. The `*APF_Laser` exports send `!RA 32;` and appear to
+belong to an automatic plate-feeder accessory, not the pointer. The pointer
+is never switched inside a job: `RedLaserOk` is not read by the job writer.
+The LED-vs-spindle test modes are carried in the header.
+
+**M20 IQ post-processor parameters** (`G2_M20_IQ.MAC`):
+
+| Parameter | Value |
+|---|---|
+| `ModePH` | 1 |
+| `FIQ` | 1 |
+| `Fmax` / `Frmax` | 3.0 m/min (M20: 1.5) |
+| `Fzmax` | 6 (M20: 1.5) |
+| `WithCoolant` | 1, `ValCoolantOn`/`Off` = +5/−5 |
+| `WithAux0` | 1, values ±6 |
+| `ZrefAuto` | 1 |
+| `TestMode` | 0 |
+| `MethodePS` | 0 |
+| `AddCdeOP` / `AddCdeOT` | 1 |
+| `RedLaserOk` | 1 |
+
+**Also in the media:**
+
+- `!BE 4;` appears in the firmware updater and driver installer (probably beep).
+- `DriverGravoDLL.dll` parses `!NC`, `!TT` and `!RA` replies, and contains
+  the literals `!PS6;` and `!OR6;` (no space), which differ from the
+  `!OR 8;` captured from the Express. Their role is ⚠ OPEN.
+
+---
+
 ## Resolved Questions (formerly open)
 
 1. **Axis telemetry units** — resolved Session 10: absolute position, 0.01 mm
@@ -279,3 +399,11 @@ Z effect on our hardware across its range.
    !MZ as 0.01 mm position.
 5. **`DZ` depth value** — "minimal effect" is from normal-range observation,
    not a systematic sweep; a `DZ 50` vs `DZ 5000` comparison has never been run.
+6. **Vendor-only opcodes** (`VR`, `VD`, `OU`, `TO`, `OP`, `2D`/`3D`, `V2`,
+   `LB`, `NR`, `ME`, `BD`, raster set): established from Gravostyle 7 static
+   analysis, never sent to hardware. First targets on the M20 IQ: `MC 1` + `VR`
+   (spindle), and the Point&Shoot `!DL`/`!PS` sequence (red pointer).
+7. **`DR` and `PW` meaning** — `DR` is a per-pass value ×1000, sent only when
+   non-zero; `PW 15` is a raster-setup constant.
+8. **IQ job-completion detection** — the Express heuristic misreads idle
+   status on the IQ (see M20 IQ section).

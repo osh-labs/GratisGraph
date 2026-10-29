@@ -9,7 +9,10 @@ If code and this document disagree, this document wins — fix the code.
 
 > Findings here were obtained through interoperability research on hardware owned by
 > the authors, by observing USB traffic between the machine and the vendor's software,
-> and confirmed by independent implementation. No proprietary code is reproduced.
+> and confirmed by independent implementation. Rows marked *vendor* come from read-only
+> static analysis of the vendor's install media for interoperability (string tables,
+> export names, call sites); only the resulting facts are recorded here. No proprietary
+> code is reproduced.
 > Gravograph, Gravotech, Gravostyle, and GT Smartstream are trademarks of Gravotech
 > Group; this project is not affiliated with or endorsed by Gravotech.
 
@@ -117,12 +120,23 @@ machine behaviour on model_code, never platform_type.
 |---|---|---|
 | 0x00 | 6 | Magic `!MM88;` |
 | 0x0A | 14 | `ot : 1\0` as UTF-16LE |
-| 0x24 | 2 | `02 04` |
+| 0x24 | 2 | **model_code**, uint16 BE — must equal the target machine's `!ID` model_code (`02 04` on the M20 Express) |
 | 0x30 | 2 | `0x0DE4` BE (BOX_DIM = 3556 units) |
 | 0x34 | 2 | `0x0DE4` BE (repeated) |
 | 0x3D | 1 | `0x02` |
 | 0x5D | 1 | `0x04` |
 | (rest) | — | zero |
+
+**model_code at 0x24 (confirmed on hardware 2026-10-28):** an M20 IQ
+(0x020D, prog 1.81) answers a job stamped `02 04` with `!JF 0;` but then
+silently discards it — no beep, green does nothing. Stamped `02 0D` the same
+job queues normally (beeps; `!ME`, `!CM`, `!ET` follow). The vendor
+post-processors carry the same value as `IdMachine` (M20 = 516 = 0x0204,
+M20 IQ = 525 = 0x020D). The driver stamps the identified model_code at send
+time, so builders may keep emitting `02 04`.
+
+The vendor's own software has two further header forms (`!AS n;` and
+`!PH 72;`, see §5.7). The machine accepts `!MM88;` regardless.
 
 ### 5.3 Opcode commands — 6 bytes each
 
@@ -146,6 +160,41 @@ scale. This REOPENS the depth question: our "PZ has minimal effect" finding
 came from sending PZ 30 with a diamond drag + spring tension; PZ may have real
 effect with a spindle-driven cutter or across its full range. Untested on our
 hardware. The ≈6 mm solenoid stroke (drag mode) finding still stands separately.
+
+**Full opcode vocabulary (Gravostyle 7 static analysis, 2026-10-28).** These
+are the 27 opcodes the vendor's job writer can emit. *Wire* = seen in a USB
+capture or sent by this driver; *vendor* = established from the vendor
+software's own function names and debug-trace strings, not yet observed on
+the wire. See PROTOCOL_FINDINGS.md for the evidence behind each row.
+
+| Op | Argument | Meaning | Status |
+|---|---|---|---|
+| `PD` | 0 | Tool down to engraving depth (vendor: "go to depth") | wire |
+| `PU` | 0 / 1 | Lift: 0 = inter-pass clearance, 1 = safety height | wire |
+| `ZA` | 0 / 1 | Automatic Z reference before `PD`; 1 when `ZrefAuto=2` | wire |
+| `VS` | speed | XY speed | wire |
+| `VZ` | speed | Z speed | wire |
+| `PZ` | depth | Engraving depth | wire |
+| `DZ` | value | Z clearance (vendor: "dégagement") | wire |
+| `DR` | value | Per-pass value ×1000; vendor emits it only when non-zero | wire, meaning ⚠ OPEN |
+| `MC` | 1 / 0 | Spindle on / off; vendor toggles it mid-job with spindle state | wire |
+| `JF` | 0 | End of job | wire |
+| `VR` | rpm | Spindle rotation speed; only when `WithSpindleSpeed=1` | vendor |
+| `VD` | speed | Plunge (descent) speed; vendor default 15 | vendor |
+| `OU` | ±n | Output switch: +n on, −n off. M20 IQ: 5 = coolant, 6 = aux | vendor |
+| `TO` | n | Tool-changer turret position; 0 = return | vendor |
+| `OP` | 0 | Set origin at current position (after explicit move to plate/table corner) | vendor |
+| `2D` / `3D` | 0 | Movement type: 2D (dx,dy) or 3D (dx,dy,dz) segment records | vendor |
+| `V2` | 0 | Return to vector mode after a raster section | vendor |
+| `LB` | 0 / 1 / 2 chars | Machine LCD: 0 = init screen, 1 = free screen, else two ASCII chars of message text | vendor |
+| `NR` | 1 | Operator pause after an LCD message (`PauseAtEndOfMvt=1` only) | vendor |
+| `ME` | n | Pass counter in border-test modes | vendor |
+| `BD` | 0 / 1 | Braille bead dispenser up / down | vendor |
+| `RX` / `RY` | hi, lo | Raster origin X / Y as int32, sent as two uint16 opcodes (high word first) | vendor |
+| `C3` / `C4` | n words | One raster row, alternating scan direction; n uint16 pixel words follow | vendor |
+| `PW` | 15 | Raster setup constant | vendor, meaning ⚠ OPEN |
+
+Vendor per-pass defaults: `VS 15`, `VZ 5`, `VD 15`, `PZ 0`, `DZ 100`, `DR 0`.
 
 ### 5.4 Segment records — 12 bytes, raw, NO `FF FD` prefix
 
@@ -174,7 +223,8 @@ start) and as the **return-to-home** block before `JF`.
 
 Exactly **one** `JF` per job, after the final return segment. Emitting `JF`
 per-stroke stops the machine after the first stroke. `NR` does not appear in
-any captured job — do not emit.
+any captured job — do not emit. (The vendor emits `NR 1` only as an operator
+pause after an LCD message; see §5.3.)
 
 ### 5.6 Stroke-header coordinates — CONFIRMED RELATIVE (2026-06-09)
 
@@ -193,6 +243,26 @@ previous stroke's END to this stroke's start; stroke blocks are simply
 concatenated; one return-to-home delta and one `JF` close the job. There is
 no separate inter-stroke rapid record — the header IS the rapid. A parser
 must integrate deltas to recover absolute positions.
+
+### 5.7 Vendor header variants (Gravostyle 7, not yet seen on the wire)
+
+Gravostyle 7 does not emit `!MM88;`. Which header it writes depends on the
+post-processor's `ModePH` (photo/raster capability) setting:
+
+- **`ModePH=0`** — `!AS n;` + n bytes. n grows with optional feature blocks:
+  38 (46 with `UseRefMeasure`), 50, 66, 74, 106. Gravostyle 7 normally reaches 106.
+  The debug trace labels the content: machine ID, plate length/width, file
+  name, APF plate count/pressure, braille, RDF, smart-spindle, Artfoil,
+  `M_OPT[n]`, `REFX`/`REFY`, test mode, end-upper-right.
+- **`ModePH=1`** (M20 IQ, M20 PIX) — `!PH 72;` + 72 bytes. Bytes 0x10–0x47
+  are 14 × int32 BE: reference position X/Y/Z (0x10–0x18), machine field
+  (0x1C), accessory (0x20: table / vice / cylinder number, −1 for none),
+  diameter (0x24), raster DPI X/Y (0x28/0x2C), plate length/width
+  (0x30/0x34), auto-Z reference (0x38), strike height (0x3C), raster speed
+  (0x40), 0x44 unidentified. 0x00–0x0F ⚠ OPEN (likely a name field).
+
+Byte layouts of `!AS` and of the vendor's `CIRC` (native arc) record are
+⚠ OPEN.
 
 ## 6. Execution model (confirmed on hardware 2026-06-09)
 
@@ -227,6 +297,29 @@ uncharacterised semantics — recorded so nobody re-discovers them:
 `!GA 4;\r\n` (queues a homing job, short beep) and `!DL 4;\r\n`
 (beep; presumed download mode). Not used by the driver.
 
+**`!DL` is counted, not a bare command.** The vendor sends it as
+`!DL 4;` + int32 BE model_code, immediately before a Point&Shoot request.
+Host→machine ASCII commands use the same `!XX N;` + N-byte counted framing
+as machine responses (§3).
+
+**Point&Shoot / red laser pointer (vendor, not yet sent by the driver):**
+
+```
+!DL 4;   + int32 BE  model_code
+!PS 20;  + 5 × int32 BE  [model_code, accessory, diameter, red_pointer, ps_method]
+...      operator jogs with the joystick, presses Enter/Action;
+         machine replies with the position (!OR …; the vendor
+         DLL matches replies against the literals "!PS6;" / "!OR6;")
+!1B 0;   cancel: head returns to origin, beeps, pointer off
+```
+
+`red_pointer` is the field the vendor's `SetPointeurRouge` writes; its
+default is 1 (use the red pointer, as opposed to the tool tip).
+`accessory` 0 is presumed to mean a flat plate. `ps_method` is the
+post-processor's `MethodePS` (0 on the M20 IQ), set to 1 by the vendor's
+drawing tools. Machine behaviour (beep, pointer on) is taken from the vendor
+manual and is ⚠ OPEN until tried on hardware.
+
 ## 9. Open questions (consolidated)
 
 1. **§5.6 stroke-header semantics** — the only item blocking multi-stroke
@@ -234,3 +327,6 @@ uncharacterised semantics — recorded so nobody re-discovers them:
 2. `accel=551`: live parameter or sentinel.
 3. `model_code_alt` / machine serial number source.
 4. `!ID 0;` unanswered while machine is long-idle.
+5. `DR` and `PW` meanings (§5.3).
+6. Point&Shoot sequence (§8) and the vendor-only opcodes (§5.3) — untried on hardware.
+7. `!AS` header and `CIRC` record byte layouts (§5.7).

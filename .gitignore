@@ -66,3 +66,6 @@ tray/build/
 tray/dist/
 tray/build-venv/
 tray/resources/*.iconset/
+
+# Vendor install media (proprietary) — never commit
+GS7/
