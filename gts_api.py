@@ -1182,6 +1182,21 @@ class GTSConnection:
         return 'M20'
 
 
+    def _stamp_model_code(self, gts: bytes) -> bytes:
+        """
+        Write the identified machine's model_code into header 0x24.
+
+        Builders emit 0x0204 (M20 Express). An M20 IQ (0x020D, prog 1.81)
+        acks such a job with !JF but silently discards it — no beep, green
+        does nothing; stamped with its own code it queues normally (live
+        2026-10-28). No-op before identify() or on a non-GTS payload.
+        """
+        if not self.model_code or not gts.startswith(MAGIC) or len(gts) < 0x26:
+            return gts
+        b = bytearray(gts)
+        struct.pack_into('>H', b, 0x24, self.model_code)
+        return bytes(b)
+
     def send_gts(self, gts: bytes, home_first: bool = True):
         """
         Send a pre-built GTS binary to the machine.
@@ -1196,9 +1211,10 @@ class GTSConnection:
         home_first=False / --no-home.
         """
         if home_first:
-            home = build_home_gts()
+            home = self._stamp_model_code(build_home_gts())
             self._log(f'Queuing home GTS ({len(home)} bytes)...')
             self.send_raw(home)
+        gts = self._stamp_model_code(gts)
         self._log(f'Sending {len(gts)} bytes...')
         self.send_raw(gts)
         self._log('Jobs queued. ONE green press runs the full sequence.')

@@ -375,3 +375,27 @@ def test_build_gts_multistroke_emits_hardware_proven_format():
               + _seg(1000, 0) + _cmd(b'PU', 0) * 2 + _cmd(b'PU', 1)
               + _seg(-4000, -4000) + _cmd(b'JF', 0))
     assert job == proven
+
+
+def test_send_gts_stamps_identified_model_code():
+    """An M20 IQ discards jobs whose header carries the Express's 0x0204;
+    send_gts must write the identified model_code into header 0x24."""
+    conn = GTSConnection(verbose=False)
+    conn.model_code = 0x020D
+    sent = []
+    conn.send_raw = sent.append
+    conn._monitor_job = lambda: None
+    conn.send_gts(build_gts([(0, 0, [(1000, 0)])]), home_first=True)
+    assert len(sent) == 2
+    for payload in sent:
+        assert payload[0x24:0x26] == b'\x02\x0D'
+
+def test_send_gts_leaves_express_bytes_unchanged():
+    conn = GTSConnection(verbose=False)
+    conn.model_code = 0x0204
+    sent = []
+    conn.send_raw = sent.append
+    conn._monitor_job = lambda: None
+    gts = build_gts([(0, 0, [(1000, 0)])])
+    conn.send_gts(gts, home_first=False)
+    assert sent == [gts]
