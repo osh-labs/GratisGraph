@@ -56,7 +56,8 @@ without green" and "two green presses" were both **wrong**).
   to execute after the disconnect timeout, pausing at the first `PD` for a green
   press if one is present. `PD` is the deliberate operator confirmation gate.
 - **Job completion detection:** axis telemetry returning to 0 plus `!MN`
-  heartbeats. Never `!JF`.
+  heartbeats. Never `!JF`. (M20 IQ: `!ET` after `!CM 4;` = 1 instead; see
+  open question 8.)
 - `!ID 0;` only responds shortly after power-on, not while long-term idle
   (mechanism unknown — open question).
 
@@ -267,7 +268,7 @@ model_code into 0x24. Engrave-job execution on the IQ is not yet confirmed.
 Also observed: after the rejected jobs, the motion monitor treated repeated
 idle `!MY` status (Y holding at 46.17 mm) as motion and reported "done". The
 completion heuristic was characterised on the Express and does not hold on
-the IQ.
+the IQ. (Fixed 2026-10-29: see open question 8.)
 
 ---
 
@@ -505,8 +506,14 @@ on/off (Shift+✓) send **nothing**, so the host cannot know their state.
    observable effect), and a `PZ` depth sweep with a real cutter.
 7. **`DR` and `PW` meaning** — `DR` is a per-pass value ×1000, sent only when
    non-zero; `PW 15` is a raster-setup constant.
-8. **IQ job-completion detection** — the Express heuristic misreads idle
-   status on the IQ (see M20 IQ section).
+8. **IQ job-completion detection** — resolved in the driver 2026-10-29 from
+   the probe dumps: once any `!CM` arrives, `_monitor_job` ignores axis
+   telemetry and completes on the `!ET` after `!CM 4;` = 1 (`!CM` = 3 NR
+   pauses extend the timeout). Axis motion now means a *changed* value, so
+   repeated idle reports no longer arm the silence fallback. Still to
+   confirm on hardware: a live `gts_ctl` send returning at `!ET`; whether
+   the Express also sends one `!ET` per queue (it stays on the axis
+   heuristic until then).
 9. **Point&Shoot remainder** — normal end of a `ps_method` 1 session; the
    (0, 0) first pair of the closing method-0 reply. (Resolved 2026-10-29: the
    shot point does NOT become the job origin; the host must offset the job.)

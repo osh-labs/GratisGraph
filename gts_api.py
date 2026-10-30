@@ -1576,17 +1576,26 @@ class GTSConnection:
         """
         Monitor machine responses until the job is complete.
 
-        Uses binary motor status protocol (confirmed live):
-          Running:  !MX/MY/MZ packets with value > 0
-          Complete: all active axes report 0, then !MN heartbeat
-        Fallback: 5s silence after last non-heartbeat packet.
+        M20 IQ (confirmed 2026-10-29): green gives !CM 4; = 1, the run ends
+        with one !ET 4; for the whole queue. !CM = 3 is a pause at NR (green
+        resumes), -1 is panel/jog mode. Once any !CM is seen the axis
+        heuristic below is ignored: the IQ's !MX/MY/MZ are idle position
+        reports that settle at non-zero values and misread as motion.
+
+        Other machines (M20 Express, confirmed 2026-06-09):
+          Running:  !MX/MY/MZ values changing
+          Complete: all moving axes report 0, then !MN heartbeat
+        Fallback: 5s silence after last axis motion.
         """
         deadline         = time.monotonic() + timeout_s
         last_motion_time = time.monotonic()
         silence_timeout  = 5.0
         axes_seen_moving: set = set()
         axes_at_home:     set = set()
+        last_axis_value:  dict = {}
         jf_acks          = 0
+        cm_state         = None    # last !CM 4; value (IQ only), signed
+        job_started      = False
 
         self._log('Monitoring job — watching for axis motion...')
 
@@ -1609,7 +1618,29 @@ class GTSConnection:
                     self._log(f'Machine acknowledged job receipt '
                               f'(!JF #{jf_acks}). Waiting for execution...')
                     continue
+                if item['type'] == 'ack' and item.get('cmd', '').startswith('!CM'):
+                    cm_state = (item.get('values') or (None,))[0]
+                    if cm_state == 1:
+                        job_started = True
+                        self._log('Job running (!CM 1).')
+                    elif cm_state == 3:
+                        self._log('Job paused at NR — press green to resume.')
+                    elif cm_state == -1:
+                        self._log('Machine in panel/jog mode (!CM -1).')
+                    # Waiting on the operator must not eat the job's timeout.
+                    deadline = max(deadline, time.monotonic() + timeout_s)
+                    continue
+                if item['type'] == 'ack' and item.get('cmd', '').startswith('!LB'):
+                    self._log(f'Machine message: {item.get("label")!r}')
+                    continue
+                if item['type'] == 'ack' and item.get('cmd', '').startswith('!ET'):
+                    if job_started:
+                        self._log(f'Job complete (!ET {item.get("value")}).')
+                        return
+                    continue
                 if item['type'] == 'motor':
+                    if cm_state is not None:
+                        continue   # IQ: completion comes from !CM/!ET only
                     axis, value = item['axis'], item['value']
                     if axis == 'E':
                         # !ME accompanies job receipt and is not axis motion;
@@ -1621,6 +1652,13 @@ class GTSConnection:
                             self._log('Job complete (all axes returned home).')
                             return
                         continue
+                    # Only a changed value is motion; a repeated value is an
+                    # idle position report (IQ Y holding at 46.17 mm read as
+                    # motion, 2026-10-28).
+                    prev = last_axis_value.get(axis)
+                    last_axis_value[axis] = value
+                    if prev is None or value == prev:
+                        continue   # first report is a baseline, not motion
                     last_motion_time = time.monotonic()
                     if value > 0:
                         axes_seen_moving.add(axis)

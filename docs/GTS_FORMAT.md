@@ -292,8 +292,11 @@ Byte layouts of `!AS` and of the vendor's `CIRC` (native arc) record are
   `21 43 4D 20 34 3B 00 00 00 01`) after the job, then disconnect; the machine
   executes after the ~15 s timeout, pausing at the first `PD` for green if
   present. `PD` is the operator confirmation gate in armed jobs.
-- **Job completion detection:** axis telemetry returning to 0 plus `!MN`
-  heartbeats. `!JF` is a receipt ack and MUST NOT be treated as completion.
+- **Job completion detection:** M20 IQ: the `!ET` that follows `!CM 4;` = 1
+  (one `!ET` per green press, covering the whole queue); the IQ's axis
+  telemetry is idle position reports and does not settle at 0 first. Other
+  machines: changing axis telemetry returning to 0 plus `!MN` heartbeats.
+  `!JF` is a receipt ack and MUST NOT be treated as completion.
 
 ## 7. Reference captures
 

@@ -425,3 +425,74 @@ def test_parse_iq_reply_payloads():
     assert lb['label'] == 'HI' and lb['values'] is None
     assert cm['value'] == 0xFFFFFFFF and cm['values'] == (-1,)
     assert conn._rx_buf == b''
+
+
+# ---------------------------------------------------------------------------
+# Job monitor: M20 IQ completion via !CM / !ET (sequences from 2026-10-29 dumps)
+# ---------------------------------------------------------------------------
+
+def _feed(conn, raw: bytes):
+    conn._rx_buf = raw
+    conn._parse_rx_buf()
+
+def _cm(v):  return b'!CM 4;' + struct.pack('>i', v)
+def _et(v):  return b'!ET 4;' + struct.pack('>I', v)
+def _mot(a, v): return b'!M' + a + b' 4;' + struct.pack('>I', v)
+
+def _logging_conn():
+    conn = _make_conn_with_queue()
+    conn.log = []
+    conn._log = conn.log.append
+    return conn
+
+
+def test_monitor_iq_completes_on_et_not_telemetry():
+    """IQ square: telemetry is position reports that do not settle at 0
+    before !ET. Completion must be the !ET after !CM 1, and nothing earlier."""
+    conn = _logging_conn()
+    _feed(conn, b'!JF 0;' + b'!JF 0;' + _cm(1)
+          + _mot(b'X', 1999) + _mot(b'Y', 1999) + _mot(b'X', 0) + _mot(b'Y', 0)
+          + _mot(b'N', 502) + _mot(b'X', 2728) + _et(5)
+          + _mot(b'X', 94) + _mot(b'N', 536))
+    conn._monitor_job(timeout_s=2.0)
+    assert conn.log[-1] == 'Job complete (!ET 5).'
+    assert conn._rx_queue.qsize() == 2        # returned exactly at !ET
+
+
+def test_monitor_iq_nr_pause_waits_for_resume():
+    conn = _logging_conn()
+    _feed(conn, _cm(1) + b'!LB 3;HI\x00' + _cm(3) + _cm(1)
+          + _mot(b'X', 1923) + _et(5))
+    conn._monitor_job(timeout_s=2.0)
+    assert any('paused at NR' in m for m in conn.log)
+    assert any("'HI'" in m for m in conn.log)
+    assert conn.log[-1] == 'Job complete (!ET 5).'
+
+
+def test_monitor_ignores_et_before_job_start():
+    """An !ET with no preceding !CM 1 (e.g. a stray home job) is not completion."""
+    import time as _time
+    conn = _logging_conn()
+    _feed(conn, _et(0))
+    t0 = _time.monotonic()
+    conn._monitor_job(timeout_s=0.7)
+    assert _time.monotonic() - t0 >= 0.6
+    assert not any('complete' in m for m in conn.log)
+
+
+def test_monitor_repeated_idle_position_is_not_motion(monkeypatch):
+    """Regression (IQ 2026-10-28): Y holding at 46.17 mm, reported repeatedly
+    before green, armed the silence heuristic and reported 'done'."""
+    import gts_api
+    clock = [1000.0]
+    def fake_monotonic():
+        clock[0] += 2.0                       # silence window passes quickly
+        return clock[0]
+    monkeypatch.setattr(gts_api.time, 'monotonic', fake_monotonic)
+    conn = _logging_conn()
+    conn.recv = lambda timeout_ms=0: (conn._rx_queue.get_nowait()
+                                      if not conn._rx_queue.empty() else None)
+    _feed(conn, _mot(b'Y', 4617) * 5)
+    conn._monitor_job(timeout_s=30.0)
+    assert not any('complete' in m for m in conn.log)
+    assert 'timed out' in conn.log[-1]
