@@ -3,7 +3,7 @@
 **Licence:** GPL v3
 **Target:** M20 machine USB protocol & binary format
 **Vendor driver (Windows):** GT Smartstream 4.06 (Gravograph)
-**Last updated:** 2026-10-28 — M20 IQ header model_code; Gravostyle 7 static analysis (full opcode vocabulary, Point&Shoot)
+**Last updated:** 2026-10-29 — M20 IQ hardware probes (Point&Shoot confirmed, LB/NR/VD/2D/OU accepted, new machine packets)
 **Status:** 🟢 Protocol fully confirmed — G-Code → GTS binary → USB working end-to-end
 
 > **Note:** the normative wire-format reference is now [`GTS_FORMAT.md`](GTS_FORMAT.md).
@@ -366,6 +366,103 @@ The LED-vs-spindle test modes are carried in the header.
 
 ---
 
+## M20 IQ Hardware Probes (2026-10-29)
+
+**Method.** `gts_probe.py` sends one change per case relative to a baseline
+(a 10 mm square, diamond scribe, `MC 0`) and captures everything the machine
+returns. Each run's report and raw dump are kept locally in `data/probes/`.
+The machine was an M20 IQ+ (0x020D, prog 1.81) with **no LCD** (9-key panel),
+a rotary spindle, a red pointer, and a vise. The operator manual (M20 series,
+EN_C) was used to interpret panel behaviour. The origin is the centre of the
+vise, so engrave-job probes were kept within a 20 mm box around (50, 50) mm.
+Squares placed at (20, 20) mm hit the vise jaws.
+
+**Baseline.** Engrave jobs execute on the IQ (also confirmed via the web UI).
+Per queued job the IQ sends `!JF 0;` then `!ME` = 1001. A green press gives
+`!CM 4;` = 1, then telemetry, `!ME` 1002→1004→1000 and `!ET`. A home job
+reports `!ET` = 0.
+
+**In-job opcodes** (one per run, all jobs executed normally):
+
+| Probe | Result |
+|---|---|
+| `LB 0`, `LB "HI"`, `LB 1` | Accepted; nothing visible (no LCD) |
+| …plus `NR 1` | **Pauses before the first stroke until green is pressed again.** During the pause the IQ sends `!CM 4;` = 3 and relays the message as `!LB 3;` + `"HI\0"`; a second green resumes (`!CM 4;` = 1) |
+| `VD 15` in setup | Accepted; `!ET` 6 vs 5 baseline (one run) |
+| `2D 0` in setup | Accepted; no change (`!ET` 5) |
+| segment `accel` 100 vs 551 | 20 mm straight line: no visible or timing difference (`!ET` 7 both) |
+| `OU +6` / `OU −6` | Accepted; nothing observable (no aux accessory). The manual's rear Sub-D 15 has four open-collector outputs: a candidate target |
+
+**ASCII commands (no motion):**
+
+- `!ID 0;` answered at connect and again 10 s later, but the machine had
+  just been powered on, so this doesn't settle the long-idle question.
+- `!BE 4;` + 1 → `!BE 8;` (1, 1). **No beep.**
+- `!DL 4;` + model_code → `!DL 8;` (2170, 0).
+
+**Point&Shoot (confirmed).** `!DL` + `!PS 20;` [0x020D, 0, 0, 1, 0] turns
+the red pointer on. The operator jogs with the arrows (telemetry streams) and
+presses **Check** (green does nothing). The machine beeps and replies
+`!PS 16;` (6949, 4991, −1, −1), then the pointer turns off and the head homes.
+The last telemetry before the confirm was (4778, 4991). The X difference,
+2171, equals the `!DL` reply, so **`!DL` returns the pointer-to-tool offset**,
+and method 0 reports the tool position over the aimed spot. The manual's
+machine adjustment stores a separate "diode zero point" **in X only**, which
+explains the 0 Y offset.
+
+With `ps_method` = 1, each Check press gives its own `!PS 16;` with the raw
+head position, (2496, 4222) and (5889, 7104), both matching telemetry exactly
+with no offset. The pointer stayed on after two points. `!1B 0;` (sent with no
+active session, or during one) turns the pointer off and homes the head. It
+gets no reply, and the return move sends no telemetry. A Point&Shoot session
+survives a USB reconnect.
+
+**Method 0 needs two Check presses, and the origin does not move.** In a
+repeat run the operator aimed the pointer at the scrap centre. Telemetry
+read (4702, 4743), so telemetry follows the pointer spot during a session.
+The first Check gave `!PS 16;` (6872, 4743, −1, −1), the spot + offset. The
+session stayed open: green was ignored, and a job sent meanwhile was received
+(`!JF`, `!ME` 1001) but did not start. A second Check gave `!PS 16;`
+(0, 0, 4702, 4743) and the head homed. Green then ran the queued job, a
+tool-up rapid to job (5, 5) mm parked at `NR`: telemetry (499, 499), i.e.
+ordinary machine coordinates. **Floating origin is host-side.** The host must
+add the shot point to the job itself. (The first method-0 run's "head home"
+was the second press, not the later `!1B`.)
+
+**Spindle (`MC`/`VR`).** Tested with no cutter: the tool was fitted reversed
+(blunt end down) so plunges were harmless. A turning spindle is hard to see;
+two early "no spin" results were wrong and were rerun.
+
+| Job | `MC` | `VR` | `ZA`/`PD` plunge | Spindle |
+|---|---|---|---|---|
+| tool-up rapids, `MC 1` mid-job | 1 | — / 8000 | no | off |
+| tool-up rapids, `MC 1` in setup | 1 | 8000 | no | off (rerun) |
+| 10 mm square, `PZ 10` | 1 | — | yes | **on** (rerun) |
+| 10 mm square, `PZ 10` | 1 | 8000 | yes | **on** |
+| 10 mm square (baseline) | 0 | — | yes | off |
+
+So **the IQ turns the spindle only with `MC 1` and the tool down**, and `VR`
+is not required. The panel's Shift+✓ spins it regardless (no tool interlock).
+`!ET` reported 10 for the tool-up spindle jobs and 0 for a tool-up job
+without `MC 1`.
+
+**`VR` does not change the speed** (as far as could be observed). The same
+plunge job with `VR 4000` and then `VR 16000` spun at the same speed by eye
+(the operator used a video tachometer but couldn't get a clean reading).
+Laptop-microphone audio showed the same pattern in both runs: 174 Hz during
+moves (steppers), and a 245–254 Hz tone only during the plunged square. If
+that tone is the spindle, it would mean a fixed ≈ 14 700–15 200 rpm
+(unconfirmed). `!ET` was 9 for both. Either the IQ ignores `VR` in `!MM88;`
+jobs, or speed control is enabled elsewhere (the post-processor's
+`WithSpindleSpeed`, possibly via the `!PH 72;` header). `PZ` depth is still
+untested (needs a real cutter).
+
+**Panel keys over USB** (passive capture). Jogging produces `!MX`/`!MY`
+telemetry and bursts of `!CM 4;` = −1. Pointer on/off (Shift+◀) and spindle
+on/off (Shift+✓) send **nothing**, so the host cannot know their state.
+
+---
+
 ## Resolved Questions (formerly open)
 
 1. **Axis telemetry units** — resolved Session 10: absolute position, 0.01 mm
@@ -385,8 +482,10 @@ The LED-vs-spindle test modes are carried in the header.
    "USB Printer", IEEE-1284 device ID (0xA1) returns empty MFG:;CMD:;MDL:;, and
    !ID model_code_alt = 0. Quick's licensing keys on something other than a
    machine serial.
-4. **`accel=551` field** — constant in all captures. Live parameter or
-   sentinel? Test by sweeping values on identical segments.
+4. **`accel=551` field** — constant in all captures. M20 IQ 2026-10-29:
+   100 vs 551 on one straight 20 mm segment made no difference. Next: a
+   multi-segment shape with corners, since the vendor trace calls the
+   field `DANG` (likely an angle term).
 4. **`!ET` packet semantics** — execution-time-in-seconds hypothesis
    strengthened: two byte-identical jobs both reported 9; a longer job
    reported 13; reproducible. Across all three runs the wall-clock motion
@@ -399,11 +498,17 @@ The LED-vs-spindle test modes are carried in the header.
    !MZ as 0.01 mm position.
 5. **`DZ` depth value** — "minimal effect" is from normal-range observation,
    not a systematic sweep; a `DZ 50` vs `DZ 5000` comparison has never been run.
-6. **Vendor-only opcodes** (`VR`, `VD`, `OU`, `TO`, `OP`, `2D`/`3D`, `V2`,
-   `LB`, `NR`, `ME`, `BD`, raster set): established from Gravostyle 7 static
-   analysis, never sent to hardware. First targets on the M20 IQ: `MC 1` + `VR`
-   (spindle), and the Point&Shoot `!DL`/`!PS` sequence (red pointer).
+6. **Vendor-only opcodes still untried**: `VR`, `TO`, `OP`, `3D`, `V2`,
+   `ME`, `BD`, raster set. `LB`, `NR`, `VD`, `2D`, `OU`, `MC`/`VR` and
+   Point&Shoot were tried on the M20 IQ 2026-10-29 (see that section). Next
+   targets: how to enable spindle speed control (`VR` alone had no
+   observable effect), and a `PZ` depth sweep with a real cutter.
 7. **`DR` and `PW` meaning** — `DR` is a per-pass value ×1000, sent only when
    non-zero; `PW 15` is a raster-setup constant.
 8. **IQ job-completion detection** — the Express heuristic misreads idle
    status on the IQ (see M20 IQ section).
+9. **Point&Shoot remainder** — normal end of a `ps_method` 1 session; the
+   (0, 0) first pair of the closing method-0 reply. (Resolved 2026-10-29: the
+   shot point does NOT become the job origin; the host must offset the job.)
+10. **`!CM 4;` value set** — 1 (running), 3 (paused at `NR`), −1 (panel/jog
+    mode) seen so far.

@@ -2,6 +2,8 @@
 
 **Status:** Confirmed on hardware (Gravograph M20 Express, Sirius FW boot 1.2 / prog 1.30).
 Multi-stroke header semantics confirmed 2026-06-09 (telemetry-verified to 0.01 mm).
+M20 IQ+ (model 0x020D, prog 1.81) probed 2026-10-29: engrave jobs, `NR`/`LB`,
+Point&Shoot and the spindle rule confirmed; rows say "(IQ)" where only the IQ was tested.
 **Scope:** The USB transport and binary job format used by Gravograph M20/M40-family
 contact engraving machines. This document is the implementation contract for all
 GratisGraph translators (Python reference implementation, planned TypeScript port).
@@ -71,6 +73,14 @@ The count is the exact payload length. There are no delimiters between packets.
 | `!ET 4;` | 4 | uint32 BE | End of motion. Plausibly engrave-job execution time in seconds: identical jobs reproduce the same value (9, 9); longer job → 13; wall-clock window consistently ~4 s larger (home job excluded?) |
 | `!OR 8;` | 8 | 2× uint32 BE | Origin report: machine→host packed (X, Y) at 0.01mm, sent when the operator jogs the head and confirms a new origin on the panel (confirmed 2026-06-09) |
 | `!TU 4;` etc. | 4 | uint32 BE | Command acknowledgements |
+| `!CM 4;` | 4 | int32 BE | Machine state (M20 IQ, 2026-10-29): `1` = job started by green, `3` = paused at `NR`, `−1` = panel/manual (jog) mode |
+| `!LB 3;` | 3 | 2 ASCII + NUL | LCD message text relayed to the host while a job pauses at `NR` (M20 IQ, which has no screen) |
+| `!DL 8;` | 8 | 2× int32 BE | Reply to host `!DL`: red-pointer offset from the tool, (X, Y) at 0.01 mm. M20 IQ: (2170, 0). Matches the X-only "diode zero point" calibration in the operator manual |
+| `!PS 16;` | 16 | 4× int32 BE | Point&Shoot point, one reply per Check press: (X, Y, −1, −1). See §8 |
+| `!BE 8;` | 8 | 2× int32 BE | Reply to host `!BE 4;` + 1: payload (1, 1). No audible beep on the M20 IQ |
+
+Packets whose payload the driver does not decode (`!CM`, `!LB`, `!DL`,
+`!PS`, `!BE`) must still be consumed by their count.
 
 Position telemetry streams continuously during job execution in bursts.
 Telemetry unit mapping confirmed: values are absolute position at 100 units/mm
@@ -177,17 +187,17 @@ the wire. See PROTOCOL_FINDINGS.md for the evidence behind each row.
 | `PZ` | depth | Engraving depth | wire |
 | `DZ` | value | Z clearance (vendor: "dégagement") | wire |
 | `DR` | value | Per-pass value ×1000; vendor emits it only when non-zero | wire, meaning ⚠ OPEN |
-| `MC` | 1 / 0 | Spindle on / off; vendor toggles it mid-job with spindle state | wire |
+| `MC` | 1 / 0 | Spindle on / off; vendor toggles it mid-job with spindle state. **M20 IQ: the spindle turns only while `MC 1` AND the tool is down (`ZA`/`PD`)**; tool-up rapids with `MC 1` do not spin it, and a plunge job with `MC 0` does not either (2026-10-29) | wire |
 | `JF` | 0 | End of job | wire |
-| `VR` | rpm | Spindle rotation speed; only when `WithSpindleSpeed=1` | vendor |
-| `VD` | speed | Plunge (descent) speed; vendor default 15 | vendor |
-| `OU` | ±n | Output switch: +n on, −n off. M20 IQ: 5 = coolant, 6 = aux | vendor |
+| `VR` | rpm | Spindle rotation speed; only when `WithSpindleSpeed=1`. Manual: M20 spindle max 19 200 rpm. M20 IQ accepts `VR`, but it is not needed to start the spindle and `VR 4000` vs `VR 16000` gave **no observable speed change** (by eye and audio) in an `!MM88;` job. Speed control may need enabling elsewhere (vendor `WithSpindleSpeed`; `!PH` header?) ⚠ OPEN | wire (IQ) |
+| `VD` | speed | Plunge (descent) speed; vendor default 15. M20 IQ accepts it; `VD 15` lengthened `!ET` 5 → 6 on one run | wire (IQ) |
+| `OU` | ±n | Output switch: +n on, −n off. M20 IQ: 5 = coolant, 6 = aux. IQ accepts `OU ±6`; no effect visible without an accessory (possibly the rear Sub-D 15 outputs O1–O4) | wire (IQ) |
 | `TO` | n | Tool-changer turret position; 0 = return | vendor |
 | `OP` | 0 | Set origin at current position (after explicit move to plate/table corner) | vendor |
-| `2D` / `3D` | 0 | Movement type: 2D (dx,dy) or 3D (dx,dy,dz) segment records | vendor |
+| `2D` / `3D` | 0 | Movement type: 2D (dx,dy) or 3D (dx,dy,dz) segment records. IQ accepts `2D 0`, no visible change | `2D` wire (IQ) |
 | `V2` | 0 | Return to vector mode after a raster section | vendor |
-| `LB` | 0 / 1 / 2 chars | Machine LCD: 0 = init screen, 1 = free screen, else two ASCII chars of message text | vendor |
-| `NR` | 1 | Operator pause after an LCD message (`PauseAtEndOfMvt=1` only) | vendor |
+| `LB` | 0 / 1 / 2 chars | Machine LCD: 0 = init screen, 1 = free screen, else two ASCII chars of message text. M20 IQ (no LCD) accepts it and relays the text to the host as `!LB 3;` during an `NR` pause | wire (IQ) |
+| `NR` | 1 | Operator pause after an LCD message. M20 IQ: the job stops before the next stroke (`!CM 4;` = 3) until green is pressed again | wire (IQ) |
 | `ME` | n | Pass counter in border-test modes | vendor |
 | `BD` | 0 / 1 | Braille bead dispenser up / down | vendor |
 | `RX` / `RY` | hi, lo | Raster origin X / Y as int32, sent as two uint16 opcodes (high word first) | vendor |
@@ -203,7 +213,10 @@ int16 BE × 6:  pw1  pw2  speed  accel  dx  dy
 ```
 
 `pw1 = pw2 = 1`; `speed` = VS value; `accel = 551` (0x0227) in every observed
-record (⚠ OPEN: live parameter vs sentinel — untested). `dx, dy` are **relative
+record. On the M20 IQ, `accel = 100` on a single 20 mm straight segment made
+no visible or timing difference (`!ET` 7 both). The vendor trace labels these
+fields `MOVE RATIO DANG …`, so the field may be an angle term that only
+matters at corners (⚠ OPEN). `dx, dy` are **relative
 deltas** in 0.01 mm units. Parsers identify segment records by `accel == 551`.
 
 The same 12-byte record serves as the **stroke header** (pen-up rapid to stroke
@@ -302,23 +315,42 @@ uncharacterised semantics — recorded so nobody re-discovers them:
 Host→machine ASCII commands use the same `!XX N;` + N-byte counted framing
 as machine responses (§3).
 
-**Point&Shoot / red laser pointer (vendor, not yet sent by the driver):**
+**Point&Shoot / red laser pointer (confirmed on the M20 IQ, 2026-10-29;
+not yet used by the driver):**
 
 ```
-!DL 4;   + int32 BE  model_code
-!PS 20;  + 5 × int32 BE  [model_code, accessory, diameter, red_pointer, ps_method]
-...      operator jogs with the joystick, presses Enter/Action;
-         machine replies with the position (!OR …; the vendor
-         DLL matches replies against the literals "!PS6;" / "!OR6;")
-!1B 0;   cancel: head returns to origin, beeps, pointer off
+host:    !DL 4;  + int32 BE model_code
+machine: !DL 8;  + 2× int32 BE pointer offset (X, Y), 0.01 mm   — IQ: (2170, 0)
+host:    !PS 20; + 5× int32 BE [model_code, accessory, diameter, red_pointer, ps_method]
+         → red pointer turns on; operator jogs with the arrow keys
+           (the machine streams !MX/!MY while jogging)
+         → operator presses Check (✓): beep, and
+machine: !PS 16; + 4× int32 BE (X, Y, −1, −1)
+host:    !1B 0;  cancel: pointer off, head returns home; no reply
 ```
 
-`red_pointer` is the field the vendor's `SetPointeurRouge` writes; its
-default is 1 (use the red pointer, as opposed to the tool tip).
-`accessory` 0 is presumed to mean a flat plate. `ps_method` is the
-post-processor's `MethodePS` (0 on the M20 IQ), set to 1 by the vendor's
-drawing tools. Machine behaviour (beep, pointer on) is taken from the vendor
-manual and is ⚠ OPEN until tried on hardware.
+`!PS 16;` is two (X, Y) pairs with −1 marking an unset pair. While the
+pointer is active, the `!MX`/`!MY` telemetry tracks the **pointer spot**
+(the scrap centre read ≈ (47, 47) mm). The method-0 first reply converts
+that to the tool position over the spot by adding the `!DL` offset.
+
+Green Start does nothing during Point&Shoot; Check confirms.
+`ps_method` changes both the point count and the coordinates:
+
+| `ps_method` | Points | Reported (X, Y) | Session end |
+|---|---|---|---|
+| 0 | one, then a closing Check | 1st Check: (spot **+ pointer offset**, −1, −1), the tool position over the aimed spot. 2nd Check: (0, 0, spot) | head homes after the 2nd Check |
+| 1 | several, one `!PS 16;` per Check press | head position, no offset | still waiting after two points; ended with `!1B 0;` (normal end ⚠ OPEN) |
+
+**The machine does not move the job origin.** A job queued during a
+method-0 session waits until the session closes, then runs in ordinary
+machine coordinates (a rapid to job (5, 5) mm parked at telemetry (499, 499)
+after a shot near (69, 47)). The vendor's "floating origin" is therefore
+host-side: the host adds the shot point to the job coordinates. Green is
+ignored while a session is open, so queued jobs cannot start until it closes. Tested only with
+`accessory` 0, `diameter` 0, `red_pointer` 1. The session is held by the
+machine and survives a USB disconnect and reconnect. Turning the pointer or
+spindle on or off from the panel (Shift+◀, Shift+✓) sends nothing to the host.
 
 ## 9. Open questions (consolidated)
 
@@ -328,5 +360,7 @@ manual and is ⚠ OPEN until tried on hardware.
 3. `model_code_alt` / machine serial number source.
 4. `!ID 0;` unanswered while machine is long-idle.
 5. `DR` and `PW` meanings (§5.3).
-6. Point&Shoot sequence (§8) and the vendor-only opcodes (§5.3) — untried on hardware.
+6. Point&Shoot: normal end of a `ps_method` 1 session; meaning of the
+   (0, 0) first pair in the closing method-0 reply (§8). Still-untried vendor
+   opcodes: `VR`, `TO`, `OP`, `3D`, `V2`, `ME`, `BD`, raster set (§5.3).
 7. `!AS` header and `CIRC` record byte layouts (§5.7).
