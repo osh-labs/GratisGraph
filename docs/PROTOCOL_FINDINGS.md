@@ -481,6 +481,31 @@ most a very slight difference. The IQ spindle runs at a fixed speed;
 telemetry and bursts of `!CM 4;` = −1. Pointer on/off (Shift+◀) and spindle
 on/off (Shift+✓) send **nothing**, so the host cannot know their state.
 
+**Rotary diamond cut (`pz`, 2026-10-29).** Three real cuts on scrap, 10 mm
+squares, `MC 1`, auto ZRef (descend, touch, back off, plunge):
+
+| Run | Setup | `PZ` / `VS` / `VZ` | Result |
+|---|---|---|---|
+| 1 | no nose, pressure 4 | 10 / 25 / 25 | Very aggressive; tool slid up in the cutter button |
+| 2 | no nose, pressure 4, tool re-tightened | 5 / 15 / 5 | Chatter and skipping; tool held |
+| 3 | regulating nose, knob 2 notches, pressure 2 | 50 / 10 / 5 | Clean but light; knob → 5 notches and green pressed again: clean, good depth |
+
+Without the nose the head goes to a fixed Z, so a 0.05 mm target is smaller
+than the vise's 0.1 mm flatness spec: the tip skips the low spots and digs into
+the high ones. With the nose, the scaled knob sets depth (0.025 mm/notch) and
+`PZ` only sets how far past the touch-off the head goes to load the spring. In
+run 3 `!MZ` read 2316 near the touch and then held 2366 through both passes:
+50 counts for `PZ 50`. That fits `PZ` and IQ `!MZ` both in 0.01 mm (0.5 mm
+overtravel, the manual's 0.5–1 mm guidance, p. 50) but rests on one sample
+near the touch. The IQ's motorised Z also reached 22.1 and 16.2 mm on the
+same stock before and after the tool was re-seated about 6 mm longer, again
+consistent with 0.01 mm. (4b below is about the Express's solenoid Z.)
+
+`!ET` was 10, 16 and 24 for runs 1–3, tracking the slower `VS`/`VZ`, which
+supports the execution-time-in-seconds reading. **A green press after a job
+finishes re-runs the last job** (`!CM 4;` = 1, same telemetry, same `!ET`)
+with no new upload, so the operator can adjust the knob and re-cut.
+
 ---
 
 ## Resolved Questions (formerly open)
@@ -521,8 +546,9 @@ on/off (Shift+✓) send **nothing**, so the host cannot know their state.
 6. **Vendor-only opcodes still untried**: `VR`, `TO`, `OP`, `3D`, `V2`,
    `ME`, `BD`, raster set. `LB`, `NR`, `VD`, `2D`, `OU`, `MC`/`VR` and
    Point&Shoot were tried on the M20 IQ 2026-10-29 (see that section).
-   Spindle speed is fixed on the IQ (`VR` ignored in either order). Next
-   target: a `PZ` depth sweep with a real cutter.
+   Spindle speed is fixed on the IQ (`VR` ignored in either order). With
+   the nose fitted, `PZ` is spring overtravel (likely 0.01 mm, see the
+   rotary diamond cut). Still open: a no-nose `PZ` sweep on flat stock.
 7. **`DR` and `PW` meaning** — `DR` is a per-pass value ×1000, sent only when
    non-zero; `PW 15` is a raster-setup constant.
 8. **IQ job-completion detection** — resolved in the driver 2026-10-29 from

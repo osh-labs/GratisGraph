@@ -168,8 +168,15 @@ drag). To run a rotary cutter, send `MC 1`.
 (imperial inches on the captured install, UI-capped ~0.393"≈10mm). PZ 0→100
 scale. This REOPENS the depth question: our "PZ has minimal effect" finding
 came from sending PZ 30 with a diamond drag + spring tension; PZ may have real
-effect with a spindle-driven cutter or across its full range. Untested on our
-hardware. The ≈6 mm solenoid stroke (drag mode) finding still stands separately.
+effect with a spindle-driven cutter or across its full range. The ≈6 mm
+solenoid stroke (drag mode) finding still stands separately.
+
+M20 IQ, rotary diamond with the regulating nose (2026-10-29): the scaled knob
+sets the cut depth and `PZ` is the head's overtravel past the auto-ZRef touch.
+`PZ 50` held Z 0.50 mm past the touch reading, so likely 0.01 mm units (one
+sample). A clean cut came from nose + knob 5 notches + pressure 2 with
+`PZ 50`, `VS 10`, `VZ 5`. Without the nose (pressure 4, `PZ` 5–10) it chattered
+and skipped. See PROTOCOL_FINDINGS.md, "Rotary diamond cut".
 
 **Full opcode vocabulary (Gravostyle 7 static analysis, 2026-10-28).** These
 are the 27 opcodes the vendor's job writer can emit. *Wire* = seen in a USB
@@ -184,7 +191,7 @@ the wire. See PROTOCOL_FINDINGS.md for the evidence behind each row.
 | `ZA` | 0 / 1 | Automatic Z reference before `PD`; 1 when `ZrefAuto=2` | wire |
 | `VS` | speed | XY speed | wire |
 | `VZ` | speed | Z speed | wire |
-| `PZ` | depth | Engraving depth | wire |
+| `PZ` | depth | Engraving depth. M20 IQ with nose: Z overtravel past the auto-ZRef touch, likely 0.01 mm (`PZ 50` → +0.50 mm, one sample, 2026-10-29) | wire (IQ) |
 | `DZ` | value | Z clearance (vendor: "dégagement") | wire |
 | `DR` | value | Per-pass value ×1000; vendor emits it only when non-zero | wire, meaning ⚠ OPEN |
 | `MC` | 1 / 0 | Spindle on / off; vendor toggles it mid-job with spindle state. **M20 IQ: the spindle turns only while `MC 1` AND the tool is down (`ZA`/`PD`)**; tool-up rapids with `MC 1` do not spin it, and a plunge job with `MC 0` does not either (2026-10-29) | wire |

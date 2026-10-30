@@ -42,14 +42,23 @@ def counted(tag: str, *ints: int) -> bytes:
 
 
 def square(pre: bytes = b'', post: bytes = b'', setup: bytes = b'',
-           mc: int = 0, pz: int = None) -> bytes:
+           mc: int = 0, pz: int = None, dx: float = 0, dy: float = 0,
+           speed: int = None, vz: int = None) -> bytes:
     """
     Baseline square with opcodes spliced in: `setup` after the setup block,
     `pre` before the first stroke, `post` before the return-to-home.
+    `dx`/`dy` shift it from (50, 50) in mm; `speed` sets VS (and the
+    segments), `vz` overrides the Z speed that otherwise follows it.
     """
     kw = {} if pz is None else {'pz': pz}
-    job = bytearray(build_gts(SQUARE, **kw))
+    if speed is not None:
+        kw['speed'] = speed
+    (x, y, segs), = SQUARE
+    path = [(x + round(dx * 100), y + round(dy * 100), segs)]
+    job = bytearray(build_gts(path, **kw))
     struct.pack_into('>H', job, HEADER_LEN + 6 + 4, mc)    # MC argument
+    if vz is not None:
+        struct.pack_into('>H', job, HEADER_LEN + 18 + 4, vz)   # VZ argument
     split = HEADER_LEN + SETUP_LEN
     return bytes(job[:split] + setup + pre + job[split:-TRAILER]
                  + post + job[-TRAILER:])
@@ -196,7 +205,8 @@ CASES = {
                                                   post=_cmd(b'MC', 0)))]),
     'pz': ('E spindle — CUTTER, scrap stock',
            'Square cut with MC 1 at PZ --value; measure the depth (hypothesis: 0.01 mm units)',
-           lambda a, mc: [('job', square(mc=1, pz=a.value or 10, post=_cmd(b'MC', 0)))]),
+           lambda a, mc: [('job', square(mc=1, pz=a.value or 10, post=_cmd(b'MC', 0),
+                                         dx=a.dx, dy=a.dy, speed=a.speed, vz=a.vz))]),
 }
 
 
@@ -274,6 +284,14 @@ def main():
     r.add_argument('--value', type=int, default=None,
                    help='Case parameter (beep arg, VD speed, VR rpm, PZ depth)')
     r.add_argument('--accel', type=int, default=551)
+    r.add_argument('--dx', type=float, default=0.0,
+                   help='Shift the pz square in X, mm (from centre 50,50)')
+    r.add_argument('--dy', type=float, default=0.0,
+                   help='Shift the pz square in Y, mm (from centre 50,50)')
+    r.add_argument('--speed', type=int, default=None,
+                   help='pz: VS / segment speed (default 25; vendor 15)')
+    r.add_argument('--vz', type=int, default=None,
+                   help='pz: Z speed (default = VS; vendor 5)')
     r.add_argument('--dry-run', action='store_true',
                    help='Print the bytes that would be sent; no USB')
     r.add_argument('--notes', default=None,
