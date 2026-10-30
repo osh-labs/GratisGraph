@@ -79,7 +79,8 @@ class CaptureSummary:
             if t == 'motor':
                 return ('motor', item.get('axis'))
             if t == 'ack':
-                return ('ack', item.get('cmd'), item.get('value'))
+                return ('ack', item.get('cmd'), item.get('value'),
+                        bytes(item.get('payload') or b''))
             if t == 'long':
                 return ('long', id(item))          # never collapse identity
             return (t, item.get('text'))
@@ -109,6 +110,19 @@ class CaptureSummary:
         return (f'+{t_rel:7.2f}s  !M{axis}    \u00d7{n}  '
                 f'values {lo}\u2013{hi}{trend}')
 
+    @staticmethod
+    def _ack_payload_text(item):
+        value, values = item.get('value'), item.get('values')
+        label = item.get('label')
+        if value is not None:
+            return f'value=0x{value:08X}'
+        if values:
+            return 'values=(' + ', '.join(str(x) for x in values) + ')'
+        if label is not None:
+            return f'label={label!r}'
+        payload = item.get('payload')
+        return f'payload={payload.hex(" ")}' if payload else '(no payload)'
+
     def _timeline_lines(self):
         lines, i = [], 0
         items = self._items
@@ -127,10 +141,10 @@ class CaptureSummary:
                 lines.append(self._motor_run_line(
                     key[1], t_rel, [it['value'] for it in run]))
             elif key[0] == 'ack':
-                cmd, value = key[1], key[2]
-                v = f'value=0x{value:08X}' if value is not None else '(no payload)'
+                cmd = key[1]
+                v = self._ack_payload_text(run[0])
                 sfx = f'  \u00d7{n}' if n > 1 else ''
-                lines.append(f'+{t_rel:7.2f}s  {cmd.strip():7s}{v}{sfx}')
+                lines.append(f'+{t_rel:7.2f}s  {(cmd.strip() + " "):7s}{v}{sfx}')
             elif key[0] == 'long':
                 it = run[0]
                 lines.append(

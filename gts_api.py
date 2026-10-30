@@ -278,6 +278,25 @@ PROFILE_FOR_MODEL_CODE: dict = {
 }
 
 
+def decode_ack_payload(payload: bytes):
+    """
+    Decode the payload of a counted "!XX N;" reply. Returns (value, values, label):
+
+      value   uint32 for 4-byte payloads (e.g. !CM 4;, !ET 4;), else None.
+      values  tuple of signed int32 BE when N is a non-zero multiple of 4,
+              e.g. !DL 8; (2170, 0), !PS 16; (X, Y, -1, -1). Else None.
+      label   ASCII text for a printable NUL-terminated payload, e.g.
+              !LB 3; b'HI\\0' -> 'HI' (M20 IQ, 2026-10-29). Else None.
+    """
+    n = len(payload)
+    value  = struct.unpack('>I', payload)[0] if n == 4 else None
+    values = struct.unpack(f'>{n // 4}i', payload) if n and n % 4 == 0 else None
+    label  = None
+    if n and payload[-1] == 0 and all(0x20 <= b < 0x7F for b in payload[:-1]):
+        label = payload[:-1].decode('ascii')
+    return value, values, label
+
+
 def _cmd(opcode: bytes, arg: int) -> bytes:
     """Encode a 6-byte FF FD opcode command."""
     return b'\xFF\xFD' + opcode + struct.pack('>H', arg & 0xFFFF)
@@ -1401,14 +1420,17 @@ class GTSConnection:
                         self._dispatch_status_packet(packet)
                     else:
                         cmd_str = packet[:semi+1].decode('ascii', errors='replace')
-                        value   = (struct.unpack_from('>I', packet, semi+1)[0]
-                                   if count == 4 else None)
+                        payload = packet[semi+1:]
+                        value, values, label = decode_ack_payload(payload)
                         msg = (f'{cmd_str}  value=0x{value:08X}' if value is not None
-                               else f'{cmd_str}  payload={packet[semi+1:].hex(" ")}'
+                               else f'{cmd_str}  values={values}' if values
+                               else f'{cmd_str}  label={label!r}' if label is not None
+                               else f'{cmd_str}  payload={payload.hex(" ")}'
                                if count else cmd_str)
                         self._emit({'type': 'ack', 'cmd': cmd_str,
-                                    'value': value, 'text': msg,
-                                    'raw': packet})
+                                    'value': value, 'values': values,
+                                    'label': label, 'payload': payload,
+                                    'text': msg, 'raw': packet})
                         self._log(f'RX: {msg}')
                     continue
 

@@ -399,3 +399,29 @@ def test_send_gts_leaves_express_bytes_unchanged():
     gts = build_gts([(0, 0, [(1000, 0)])])
     conn.send_gts(gts, home_first=False)
     assert sent == [gts]
+
+
+# ---------------------------------------------------------------------------
+# RX parser: non-4-byte reply payloads (M20 IQ probes, 2026-10-29)
+# ---------------------------------------------------------------------------
+
+def test_parse_iq_reply_payloads():
+    """!DL/!PS/!BE/!LB payloads were dropped ('(no payload)' in reports).
+    Bytes below are verbatim from data/probes dumps."""
+    conn = _make_conn_with_queue()
+    conn._rx_buf = (b'!DL 8;\x00\x00\x08z\x00\x00\x00\x00'
+                    b'!PS 16;\x00\x00\x1b%\x00\x00\x13\x7f' + b'\xff' * 8 +
+                    b'!BE 8;\x00\x00\x00\x01\x00\x00\x00\x01'
+                    b'!LB 3;HI\x00'
+                    b'!CM 4;\xff\xff\xff\xff')
+    conn._parse_rx_buf()
+    items = []
+    while not conn._rx_queue.empty():
+        items.append(conn._rx_queue.get_nowait())
+    dl, ps, be, lb, cm = items
+    assert dl['values'] == (2170, 0) and dl['value'] is None
+    assert ps['values'] == (6949, 4991, -1, -1)
+    assert be['values'] == (1, 1)
+    assert lb['label'] == 'HI' and lb['values'] is None
+    assert cm['value'] == 0xFFFFFFFF and cm['values'] == (-1,)
+    assert conn._rx_buf == b''
