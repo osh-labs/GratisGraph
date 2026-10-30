@@ -188,6 +188,12 @@ CASES = {
               'As pz (PZ 10) plus VR --value rpm in the setup block — spindle with speed + plunge',
               lambda a, mc: [('job', square(mc=1, pz=10, setup=_cmd(b'VR', a.value or 8000),
                                             post=_cmd(b'MC', 0)))]),
+    'pz-vr-first': ('E spindle — CUTTER, scrap stock',
+                    'As pz-vr, but VR --value then MC 1 before the first stroke (vendor order: VR precedes MC)',
+                    lambda a, mc: [('job', square(mc=0, pz=10,
+                                                  pre=_cmd(b'VR', 13000 if a.value is None else a.value)
+                                                      + _cmd(b'MC', 1),
+                                                  post=_cmd(b'MC', 0)))]),
     'pz': ('E spindle — CUTTER, scrap stock',
            'Square cut with MC 1 at PZ --value; measure the depth (hypothesis: 0.01 mm units)',
            lambda a, mc: [('job', square(mc=1, pz=a.value or 10, post=_cmd(b'MC', 0)))]),

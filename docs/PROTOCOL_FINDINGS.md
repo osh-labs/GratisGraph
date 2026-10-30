@@ -453,10 +453,29 @@ plunge job with `VR 4000` and then `VR 16000` spun at the same speed by eye
 Laptop-microphone audio showed the same pattern in both runs: 174 Hz during
 moves (steppers), and a 245–254 Hz tone only during the plunged square. If
 that tone is the spindle, it would mean a fixed ≈ 14 700–15 200 rpm
-(unconfirmed). `!ET` was 9 for both. Either the IQ ignores `VR` in `!MM88;`
-jobs, or speed control is enabled elsewhere (the post-processor's
-`WithSpindleSpeed`, possibly via the `!PH 72;` header). `PZ` depth is still
-untested (needs a real cutter).
+(unconfirmed). `!ET` was 9 for both. `PZ` depth is still untested (needs a
+real cutter).
+
+**Spindle speed is not host-controllable on the M20 IQ** (desk research +
+two runs, 2026-10-29). In the job writer (`mac_bin_gii_2d.dll`):
+
+- `VR` is emitted only when `WithSpindleSpeed` ≠ 0 (default 0). No M20
+  post-processor sets it; even the IS-series spindle machines ship with 0.
+- Value: `(clamp(rpm, Smin, Smax) − Smin) × StoMac + SmMin`, truncated to
+  16 bits. Defaults when the `.MAC` omits them (all M20s): Smin 5000,
+  Smax 18 000, StoMac 1, SmMin 0. The IS machines set Smax 60 000,
+  StoMac 0.1. A non-zero SmMin rescales StoMac so Smax maps to StoMac × Smax.
+- Order: `VR`, then `MC 1` (spindle start).
+  `SpindleRotationOnSvalue` suppresses `MC 1` when the S value is 0.
+- The `!PH 72;` header has no spindle field.
+
+On hardware, the `pz-vr-first` probe sent `VR` then `MC 1` before the first
+stroke (vendor order), with the tool reversed. `VR 2000` and `VR 13000` gave
+the same plunge tone: 246–252 Hz per second, and 295.0 vs 296.0 Hz
+averaged over the plunge (< 0.5 % apart). Either `VR` reading (absolute rpm,
+or offset from 5000) predicts a 2.6–6.5× difference. The operator heard at
+most a very slight difference. The IQ spindle runs at a fixed speed;
+`MC 1` with the tool down is the only control.
 
 **Panel keys over USB** (passive capture). Jogging produces `!MX`/`!MY`
 telemetry and bursts of `!CM 4;` = −1. Pointer on/off (Shift+◀) and spindle
@@ -501,17 +520,18 @@ on/off (Shift+✓) send **nothing**, so the host cannot know their state.
    not a systematic sweep; a `DZ 50` vs `DZ 5000` comparison has never been run.
 6. **Vendor-only opcodes still untried**: `VR`, `TO`, `OP`, `3D`, `V2`,
    `ME`, `BD`, raster set. `LB`, `NR`, `VD`, `2D`, `OU`, `MC`/`VR` and
-   Point&Shoot were tried on the M20 IQ 2026-10-29 (see that section). Next
-   targets: how to enable spindle speed control (`VR` alone had no
-   observable effect), and a `PZ` depth sweep with a real cutter.
+   Point&Shoot were tried on the M20 IQ 2026-10-29 (see that section).
+   Spindle speed is fixed on the IQ (`VR` ignored in either order). Next
+   target: a `PZ` depth sweep with a real cutter.
 7. **`DR` and `PW` meaning** — `DR` is a per-pass value ×1000, sent only when
    non-zero; `PW 15` is a raster-setup constant.
 8. **IQ job-completion detection** — resolved in the driver 2026-10-29 from
    the probe dumps: once any `!CM` arrives, `_monitor_job` ignores axis
    telemetry and completes on the `!ET` after `!CM 4;` = 1 (`!CM` = 3 NR
    pauses extend the timeout). Axis motion now means a *changed* value, so
-   repeated idle reports no longer arm the silence fallback. Still to
-   confirm on hardware: a live `gts_ctl` send returning at `!ET`; whether
+   repeated idle reports no longer arm the silence fallback. Confirmed
+   live the same day: a `gts_ctl --send` of a 10 mm square returned on
+   `!ET 7`, 12 s after `!CM 1`, with no early "done". Still open: whether
    the Express also sends one `!ET` per queue (it stays on the axis
    heuristic until then).
 9. **Point&Shoot remainder** — normal end of a `ps_method` 1 session; the

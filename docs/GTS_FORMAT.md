@@ -189,7 +189,7 @@ the wire. See PROTOCOL_FINDINGS.md for the evidence behind each row.
 | `DR` | value | Per-pass value ×1000; vendor emits it only when non-zero | wire, meaning ⚠ OPEN |
 | `MC` | 1 / 0 | Spindle on / off; vendor toggles it mid-job with spindle state. **M20 IQ: the spindle turns only while `MC 1` AND the tool is down (`ZA`/`PD`)**; tool-up rapids with `MC 1` do not spin it, and a plunge job with `MC 0` does not either (2026-10-29) | wire |
 | `JF` | 0 | End of job | wire |
-| `VR` | rpm | Spindle rotation speed; only when `WithSpindleSpeed=1`. Manual: M20 spindle max 19 200 rpm. M20 IQ accepts `VR`, but it is not needed to start the spindle and `VR 4000` vs `VR 16000` gave **no observable speed change** (by eye and audio) in an `!MM88;` job. Speed control may need enabling elsewhere (vendor `WithSpindleSpeed`; `!PH` header?) ⚠ OPEN | wire (IQ) |
+| `VR` | uint16 | Spindle speed, sent before `MC 1` and only when `WithSpindleSpeed=1` (no M20 post-processor sets it). Vendor value = `(clamp(rpm, Smin, Smax) − Smin) × StoMac + SmMin`; defaults 5000 / 18 000 / 1 / 0, so `rpm − 5000`. **M20 IQ ignores it: fixed-speed spindle.** `VR` 4000/16000 after `MC 1`, and 2000/13000 before `MC 1` (vendor order), all gave the same ≈ 250/295 Hz spindle tone (< 0.5 % apart, 2026-10-29) | wire (IQ) |
 | `VD` | speed | Plunge (descent) speed; vendor default 15. M20 IQ accepts it; `VD 15` lengthened `!ET` 5 → 6 on one run | wire (IQ) |
 | `OU` | ±n | Output switch: +n on, −n off. M20 IQ: 5 = coolant, 6 = aux. IQ accepts `OU ±6`; no effect visible without an accessory (possibly the rear Sub-D 15 outputs O1–O4) | wire (IQ) |
 | `TO` | n | Tool-changer turret position; 0 = return | vendor |
@@ -273,6 +273,8 @@ post-processor's `ModePH` (photo/raster capability) setting:
   diameter (0x24), raster DPI X/Y (0x28/0x2C), plate length/width
   (0x30/0x34), auto-Z reference (0x38), strike height (0x3C), raster speed
   (0x40), 0x44 unidentified. 0x00–0x0F ⚠ OPEN (likely a name field).
+  No spindle field: the `!PH` trace labels none, and smart-spindle exists
+  only in `!AS`.
 
 Byte layouts of `!AS` and of the vendor's `CIRC` (native arc) record are
 ⚠ OPEN.
