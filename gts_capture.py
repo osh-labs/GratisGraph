@@ -246,7 +246,7 @@ def run_capture(duration_s: float, output: str = None, send_file: str = None,
     try:
         if send_file:
             with open(send_file, 'rb') as f:
-                gts = f.read()
+                gts = conn._stamp_model_code(f.read())
             summary.add_tx(f'GTS job from {send_file} ({len(gts)} bytes)')
             conn.send_raw(gts)
 
