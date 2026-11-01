@@ -107,6 +107,33 @@ def test_h3_no_jf() -> None:
     _only(Case(c.data[:-6], c.inputs), "H3")
 
 
+def test_h3_header_byte_changed() -> None:
+    c = case(SQUARE)
+    b = bytearray(c.data)
+    b[0x30] ^= 0x01
+    _only(Case(bytes(b), c.inputs), "H3")
+
+
+def test_h3_job_does_not_return_home() -> None:
+    c = case(SQUARE)
+    rec = records(c.data)
+    home = [r for r in rec if isinstance(r, Segment)][-1]
+    moved = seg(home.dx + 1, home.dy)
+    data = replace_record(c.data, home, moved)
+    _only(Case(data, c.inputs), "H3")
+
+
+@pytest.mark.parametrize("field", ["pw1", "pw2", "accel"])
+def test_h9_segment_field_not_observed_value(field: str) -> None:
+    c = case(SQUARE)
+    s0 = [r for r in records(c.data) if isinstance(r, Segment)][1]
+    vals = {"pw1": s0.pw1, "pw2": s0.pw2, "accel": s0.accel}
+    vals[field] = 100 if field == "accel" else 2
+    import struct
+    rec = struct.pack(">hhhhhh", vals["pw1"], vals["pw2"], s0.speed, vals["accel"], s0.dx, s0.dy)
+    _only(Case(replace_record(c.data, s0, rec), c.inputs), "H9")
+
+
 # --- H4 opcode allow-list -----------------------------------------------------------------------
 
 @pytest.mark.parametrize("op", ["TO", "LB", "NR", "OU"])
@@ -280,8 +307,15 @@ def test_h9_pu1_replaced_by_pu0() -> None:
 
 def test_h10_one_delta_altered() -> None:
     c = case(SQUARE)
-    s = [r for r in records(c.data) if isinstance(r, Segment)][2]     # second pen-down segment
-    _only(Case(replace_record(c.data, s, seg(s.dx + 1, s.dy)), c.inputs), "H10")
+    segs = [r for r in records(c.data) if isinstance(r, Segment)]
+    s, t = segs[2], segs[3]     # second and third pen-down segments
+    # +1 unit on one delta, -1 on the next: the shape changes, the end point (and return home) does not.
+    data = replace_record(c.data, t, seg(t.dx - 1, t.dy))
+    data = replace_record(data, s, seg(s.dx + 1, s.dy))
+    _only(Case(data, c.inputs), "H10")
+    # Uncompensated, the job also stops short of home: H3 refuses it too.
+    rep = Case(replace_record(c.data, s, seg(s.dx + 1, s.dy)), c.inputs).gate()
+    assert fired(rep) == {"H3", "H10"}
 
 
 def test_h10_no_intent() -> None:

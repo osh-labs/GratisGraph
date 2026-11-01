@@ -1,0 +1,42 @@
+{
+  "format": "gratisgraph-job",
+  "version": 1,
+  "units": "mm",
+  "part": "bench-scrap-40",
+  "quantity": 1,
+  "reference": "V2 PZ sweep: 10 mm square at the part origin",
+  "source": {
+    "name": "desktop/bench",
+    "version": "1"
+  },
+  "chord_tolerance_mm": 0.01,
+  "operations": [
+    {
+      "op": "trace",
+      "mode_hint": "trace",
+      "paths": [
+        {
+          "points": [
+            [
+              -5.0,
+              -5.0
+            ],
+            [
+              5.0,
+              -5.0
+            ],
+            [
+              5.0,
+              5.0
+            ],
+            [
+              -5.0,
+              5.0
+            ]
+          ],
+          "closed": true
+        }
+      ]
+    }
+  ]
+}

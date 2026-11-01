@@ -1,6 +1,6 @@
 # GratisGraph Desktop build plan
 
-Status: M0 in progress, 2026-11-01. Software exit items met; hardware stage V0 not yet run. Owner: Chris Lee.
+Status: M1 software complete, 2026-11-01 (M0 and M1 software exit items met; hardware stages V0, V1, V2 not yet run). Owner: Chris Lee.
 
 ## Bottom line
 
@@ -47,6 +47,7 @@ A closed gap is annotated in place with its evidence, never deleted.
 | G2 | Fixture for the tag: how a thin blank is held flat and registered; datum offset from machine home | Placement error, chatter on thin stock | Build a nest; measure the datum by engraving a crosshair on 5 blanks and measuring the offset | M2 |
 | G3 | Tooling for aluminum: tool for single-line mode (rotary diamond, diamond drag, or carbide), tool and tip width for fill mode | Recipe content, fill stepover | Bench matrix in M2 with the candidate tools on the chosen blank | M2 |
 | G4 | `PZ` units and effect with the nose fitted (one sample) | Recipe limits used by the gate | `PZ` sweep 20, 50, 80, 100 with `!MZ` capture; repeat 3 times | M1 |
+|  | *Software ready 2026-11-01 (M1): V2 sweep files and `ggdesk send --capture` for `!MZ`; hardware open.* | | | |
 | G5 | Minimum readable character height, per lettering mode, on the tag | Product limits handed to SEM | Character-height ladder test pattern, M2 | M2 |
 | G6 | Fill stepover vs tip width, and fill pattern (hatch angle, contour pass) | Fill appearance and run time | Stepover ladder test pattern, M2 | M2 |
 | G7 | Segment `accel` field (vendor label `DANG`) effect at corners | Corner quality in text | Corner test pattern at `accel` 551 vs alternatives; ⚠ only if corners show defects | M2 |
@@ -54,12 +55,14 @@ A closed gap is annotated in place with its evidence, never deleted.
 |  | *Software half closed 2026-11-01: the builder emits run 3's layout (MC 1 in setup, MC 0 before home) and `tests/test_rotary_params.py` holds it byte-identical to the probe job. Hardware half open: stage V0.* | | | |
 | G9 | Largest job the machine accepts, and behaviour of very long jobs (the unexplained ~500 KB `PZ 100` capture) | Fill jobs may be large | Send fills of increasing size, record acceptance and `!ET` | M2 |
 | G10 | Physical stop behaviour: what the panel stop does mid-job, and what `/abort` (`!1B 0;`) does mid-job on the IQ | Operator safety procedure, app abort semantics | Bench test with tool reversed, record telemetry | M1 |
+|  | *Software ready 2026-11-01 (M1): abort (`!1B 0;`) from the CLI (Ctrl-C) and the bench window; V2 part B; hardware open.* | | | |
 | G11 | Repeatability: depth and position over consecutive parts | Batch quality | 10 consecutive tags, measure position and inspect depth | M2 |
 | G12 | Windows 10 LTSC: WinUSB driver install for the IQ, PySide6 and Python floor on 1809 | Second platform | VM and real station test | M5 |
 | G13 | Golden `.m20` outputs are git-ignored (`*.m20`), so 15 golden tests fail on a fresh clone and the Python/TypeScript byte-identity guard is not enforced | All builder changes in M0 are unguarded | Un-ignore `tests/golden/outputs/`, commit goldens, add CI | M0 |
 |  | *Closed 2026-11-01 (PR #3): goldens committed, manifest hashes unchanged; CI runs pytest on Linux and Windows and `npm test`, plus the TS fixture drift check (PR #4).* | | | |
 | G14 | Express behaviour after shared driver changes (Chris has only the IQ) | Upstream acceptance | Upstream maintainer runs the Express goldens and a hardware check | M0 |
 | G15 | Machine bed coordinate frame vs fixture frame on the IQ, including Y direction | Mirrored or offset parts | First M1 hardware test uses an asymmetric pattern (lesson 5) | M1 |
+|  | *Software ready 2026-11-01 (M1): asymmetric golden locks the transform in software; V1 sheet and files; hardware open.* | | | |
 | G16 | Exact Python and PySide6 versions that support both Kubuntu 24.04 and Windows 10 1809 | Stack pin | Check current Qt LTS and PySide6 wheel floors at M0 | M0 |
 |  | *Closed 2026-11-01: Python 3.12 to 3.14, PySide6 6.11 (decisions.md). [STRONG] from Qt docs and PyPI metadata; the Windows 10 1809 station test stays in G12.* | | | |
 
@@ -288,10 +291,10 @@ Exit criteria:
 
 | Exit item | State | Evidence |
 |---|---|---|
-| 100 % of gate mutants rejected; 100 % of known-good corpus accepted | open | |
-| Asymmetric test engraved in the previewed orientation and position (photo, measured offset) | open | |
-| G4, G10, G15 closed | open | |
-| Bench window runs offscreen in CI; packaged self-test stub passes | open | |
+| 100 % of gate mutants rejected; 100 % of known-good corpus accepted | met | PR #12 (`tests/unit/test_gate_mutants.py`, `test_gate_corpus.py`), M1.Z (`test_bench_package.py`); `m1-acceptance.md` section 2 |
+| Asymmetric test engraved in the previewed orientation and position (photo, measured offset) | open (Chris) | Sheet `validation/V1-asymmetric.md`, files `desktop/bench/V1/` |
+| G4, G10, G15 closed | open (Chris) | Sheets `validation/V1-asymmetric.md` (G15), `validation/V2-pz-sweep-and-stop.md` (G4, G10) |
+| Bench window runs offscreen in CI; packaged self-test stub passes | met | PR #11 (`tests/gui/test_bench.py`), M1.Z (self-test builds and gates offline); desktop.yml GUI job |
 
 ### M2 Tooling program and first dog tag
 

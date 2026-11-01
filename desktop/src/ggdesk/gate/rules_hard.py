@@ -98,15 +98,43 @@ class H2ModelCode:
         return out
 
 
+def _spec_header() -> bytes:
+    """The 94-byte header from docs/GTS_FORMAT.md 5.2 (written from the spec, not the builder).
+
+    The model code at 0x24 is left zero here: H2 judges it.
+    """
+    h = bytearray(94)
+    h[0:6] = b"!MM88;"
+    meta = "ot : 1\0".encode("utf-16-le")
+    h[0x0A:0x0A + len(meta)] = meta
+    h[0x30:0x32] = (0x0DE4).to_bytes(2, "big")
+    h[0x34:0x36] = (0x0DE4).to_bytes(2, "big")
+    h[0x3D] = 0x02
+    h[0x5D] = 0x04
+    return bytes(h)
+
+
+SPEC_HEADER = _spec_header()
+
+
 class H3SingleFinalJF:
     id = "H3"
     severity = Severity.HARD
-    title = "Exactly one JF, and it is the final record"
+    title = "Job framing: spec header, return home, exactly one JF as the final record"
 
     def check(self, data: bytes, job: gts_read.Job, inputs: GateInputs) -> list[Finding]:
         jfs = [c for c in job.commands if c.op == "JF"]
         last = job.records[-1] if job.records else None
         out: list[Finding] = []
+        hdr = bytearray(data[:94])
+        hdr[gts_read.MODEL_CODE_OFFSET:gts_read.MODEL_CODE_OFFSET + 2] = b"\0\0"
+        if bytes(hdr) != SPEC_HEADER:
+            first = next(i for i, (a, b) in enumerate(zip(hdr, SPEC_HEADER, strict=True)) if a != b)
+            out.append(Finding(self.id, self.severity,
+                               f"header differs from GTS_FORMAT 5.2 at byte 0x{first:02X}", first))
+        pos = job.positions()
+        if pos and pos[-1] != (0, 0):
+            out.append(Finding(self.id, self.severity, f"the job ends at {_mm(pos[-1])}, not at home (0, 0)"))
         if not jfs:
             out.append(Finding(self.id, self.severity, "no JF: the job never ends"))
         elif len(jfs) > 1:
@@ -361,6 +389,10 @@ class H9PenUpBeforeRapid:
         down = False
         for i, r in enumerate(recs):
             if isinstance(r, Segment):
+                if (r.pw1, r.pw2, r.accel) != (1, 1, 551):
+                    out.append(Finding(self.id, self.severity,
+                                       f"segment fields pw1 {r.pw1}, pw2 {r.pw2}, accel {r.accel}: only 1, 1, 551 "
+                                       "are observed on the wire (GTS_FORMAT 5.4)", r.offset))
                 if not down and seen_pd and not pu1:
                     out.append(Finding(self.id, self.severity, "rapid without PU 1 since the last PD", r.offset))
                 continue
