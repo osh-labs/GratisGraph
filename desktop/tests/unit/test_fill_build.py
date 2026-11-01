@@ -30,7 +30,7 @@ def test_fill_goldens_present() -> None:
     assert {"fill_square_hole", "fill_hatch45", "fill_narrow"} <= set(mg.case_names())
 
 
-def test_builds_and_passes_gate_without_h7(lib: Library) -> None:
+def test_builds_and_passes_gate_with_no_hard_findings(lib: Library) -> None:
     job = jf.load(EXAMPLE)
     r = build(job, lib, SEL)
     rep = run_gate(r.data, gate_inputs(r, SEL))

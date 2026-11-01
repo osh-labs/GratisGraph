@@ -6,9 +6,9 @@ name: Desktop
 on:
   push:
     branches: [main]
-    paths: ['desktop/**', '*.py', 'pyproject.toml', 'tests/golden/**', '.github/workflows/desktop.yml']
+    paths: ['desktop/**', '*.py', 'pyproject.toml', 'tests/golden/**', 'web/src/hershey.ts', 'web/app/fonts/**', '.github/workflows/desktop.yml']
   pull_request:
-    paths: ['desktop/**', '*.py', 'pyproject.toml', 'tests/golden/**', '.github/workflows/desktop.yml']
+    paths: ['desktop/**', '*.py', 'pyproject.toml', 'tests/golden/**', 'web/src/hershey.ts', 'web/app/fonts/**', '.github/workflows/desktop.yml']
   workflow_dispatch:
 
 permissions:
@@ -68,3 +68,19 @@ jobs:
       - name: Self-test
         working-directory: desktop
         run: python -m ggdesk_app.app --self-test
+
+  hershey:
+    name: Hershey port matches the TypeScript (conformance fixture)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+        working-directory: web
+      - name: Fixture regenerated from web/src/hershey.ts is unchanged
+        working-directory: web
+        run: node_modules/.bin/tsx ../desktop/tests/fixtures/hershey/generate.mjs --check

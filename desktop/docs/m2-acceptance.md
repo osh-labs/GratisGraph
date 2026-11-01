@@ -14,7 +14,7 @@ plan is a hardware result and stays `open (Chris)` with its sheet.
 
 All paths are under `desktop/`. PRs: #15 plan, #16 M2.0 contracts, #20 M2.1 fill (with the ordering fix),
 #17 M2.2 text, #21 M2.3 patterns, #18 M2.4 GUI panels, #19 M2.5 nest drawing, M2.Z integration (this
-document's PR), and the M2 review-fix PR if the review requires one (`docs/reviews/m2-review.md`).
+document's PR), and the M2 review-fix PR (`docs/reviews/m2-review.md`).
 
 ## 1. Feature trace
 
@@ -62,3 +62,6 @@ cutting.
 - G7 alternatives (`accel` other than 551) need a driver change; deferred unless V3 part F shows defects.
 - The nest origin is a design choice recorded DEFINED before cutting, then measured in V4 part A.
 - Ordering above 128 strokes keeps the toolpath order (no TSP); patterns and fill emit sensible orders.
+- Fill end points are quantised to 0.01 mm after the tip/2 offset, so the tool edge may pass the region edge by up to
+  about 0.007 mm; the part margin (H7, on the bytes) protects the part (M2 review, finding 3).
+- The M2 review (`docs/reviews/m2-review.md`) found no Blocker; its two Majors (fill narrow-region reporting) are fixed.
