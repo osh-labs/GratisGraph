@@ -65,3 +65,30 @@ def strokes(draw: st.DrawFn) -> UStroke:
 def test_multiset_invariant(ss: list[UStroke]) -> None:
     out = order(ss)
     assert _multiset(out) == _multiset(ss)
+
+
+def test_large_jobs_order_fast_and_keep_the_multiset() -> None:
+    """Above TSP_STROKE_LIMIT only the linear passes run: 2000 strokes order in well under a second."""
+    import time
+
+    from ggdesk.toolpath.order import TSP_STROKE_LIMIT
+
+    n = 2000
+    assert n > TSP_STROKE_LIMIT
+    strokes = [UStroke(((0, 10 * i), (3000, 10 * i))) for i in range(n)]
+    t0 = time.perf_counter()
+    out = order(strokes)
+    assert time.perf_counter() - t0 < 2.0
+    assert _multiset(out) == _multiset(strokes)
+    # toolpath order kept (line i stays at position i) and the lines snake: each starts where the last ended
+    assert [min(p[1] for p in s.points) for s in out] == [10 * i for i in range(n)]
+    assert all(b.points[0][0] == a.points[-1][0] for a, b in zip(out, out[1:], strict=False))
+
+
+def test_parallel_lines_snake_below_the_limit() -> None:
+    """Below the limit too: no full-width rapid back between parallel lines (bidirectional pass off)."""
+    strokes = [UStroke(((0, 10 * i), (3000, 10 * i))) for i in range(20)]
+    out = order(strokes)
+    rapid = sum(abs(b.points[0][0] - a.points[-1][0]) + abs(b.points[0][1] - a.points[-1][1])
+                for a, b in zip(out, out[1:], strict=False))
+    assert rapid <= 10 * 19
