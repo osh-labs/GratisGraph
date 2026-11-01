@@ -1,0 +1,29 @@
+schema_version = 1
+kind = "tool"
+id = "test-tool-02"
+version = 1
+name = "TEST ONLY: rotary tool with a 0.2 mm tip"
+type = "rotary_diamond"
+
+[sources.test]
+title = "Test fixture (invented values)"
+path = "desktop/tests/fixtures/library/README.md"
+kind = "project_decision"
+
+[needs_spindle]
+value = true
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[needs_nose]
+value = true
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[tip_width_mm]
+value = 0.2
+src = "test"
+ref = "test"
+confidence = "DEFINED"

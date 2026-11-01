@@ -1,0 +1,35 @@
+# Nest for one dog tag blank. Not built yet (G2); every value waits on it.
+schema_version = 1
+kind = "fixture"
+id = "dog-tag-nest"
+version = 1
+name = "Dog tag nest (one blank)"
+keep_outs_per_job = false
+
+[datum_mm]
+null = true
+needs_measurement = true
+gap = "G2"
+measure = ["V4: engrave the datum crosshair on 5 blanks in the nest",
+           "Measure the crosshair centre from the blank outline; datum = commanded - measured mean"]
+
+[[nests]]
+id = "centre"
+
+[nests.origin_mm]
+null = true
+needs_measurement = true
+gap = "G2"
+measure = ["From the nest drawing once the nest is cut; confirm with the V4 crosshair run"]
+
+[keep_outs]
+null = true
+needs_measurement = true
+gap = "G2"
+measure = ["Measure the nest's clamps and lips from the datum with calipers; record as polygons"]
+
+[tolerance_mm]
+null = true
+needs_measurement = true
+gap = "G2"
+measure = ["V4: 5 blanks, crosshair offset from the outline centre; tolerance = largest deviation from the mean"]

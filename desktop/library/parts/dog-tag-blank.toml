@@ -1,0 +1,32 @@
+# Generic dog tag blank. Every dimension waits on the blank choice (G1).
+schema_version = 1
+kind = "part"
+id = "dog-tag-blank"
+version = 1
+name = "Dog tag blank"
+material = "tag-aluminum"
+
+[outline]
+null = true
+needs_measurement = true
+gap = "G1"
+measure = ["Calipers on 5 blanks: overall width and height, corner radius (radius gauge)",
+           "Record the outline as a rect (width_mm, height_mm, corner_radius_mm) centred on the engrave area"]
+
+[holes]
+null = true
+needs_measurement = true
+gap = "G1"
+measure = ["Calipers on 5 blanks: hole diameter and its centre from the outline centre"]
+
+[keep_out_margin_mm]
+null = true
+needs_measurement = true
+gap = "G1"
+measure = ["Edge distance where a rolled edge or the nest lip starts, plus the fixture tolerance from V3/V4"]
+
+[thickness_mm]
+null = true
+needs_measurement = true
+gap = "G1"
+measure = ["Calipers on 5 blanks, 3 points each; record mean and range"]

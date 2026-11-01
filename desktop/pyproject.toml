@@ -24,6 +24,7 @@ dev = [
     "hypothesis>=6.100",
     "ruff>=0.6",
     "mypy>=1.10",
+    "fastjsonschema>=2.19",
 ]
 # Qt 6.11 lists Windows 10 1809. Qt 6.12 is the last series with Windows 10,
 # so do not move past 6.12 while Windows 10 LTSC is a target. See docs/decisions.md.
@@ -50,7 +51,7 @@ markers = [
 ]
 
 [tool.ruff]
-line-length = 110
+line-length = 120
 target-version = "py312"
 src = ["src", "tests"]
 

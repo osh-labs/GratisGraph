@@ -1,12 +1,15 @@
 """ggdesk command line. Every core operation is reachable from here.
 
-M0: `version` and `inspect`. Later milestones add check, build, preview,
-send, pattern and library validate (build plan section 4.2).
+  ggdesk check | build | preview | send | pattern | library validate | inspect | version
+
+This module only parses arguments and dispatches to ggdesk.commands.<name>.run.
+Each slice owns its command module (desktop/docs/m1-plan.md section 2.8).
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib
 import sys
 from collections.abc import Sequence
 from pathlib import Path
@@ -14,6 +17,15 @@ from pathlib import Path
 from ggdesk import __version__
 from ggdesk.gts_read import Command, GtsFormatError, read_job
 from ggdesk.numerics import to_mm
+
+COMMANDS = {
+    "check": "gate existing .m20 bytes against a job and the library",
+    "build": "job + recipe + fixture -> .m20, then gate it",
+    "preview": "render an .m20 (decoded bytes) as SVG",
+    "send": "send gated bytes to the machine (refuses without a bound, passing report)",
+    "pattern": "generate a bench test pattern job",
+    "library": "library tools (validate)",
+}
 
 
 def _extent(points: list[tuple[int, int]]) -> str:
@@ -57,11 +69,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     sub.add_parser("version", help="print the version")
     p = sub.add_parser("inspect", help="decode an .m20 job and summarise it")
     p.add_argument("file", type=Path)
+    for name, help_text in COMMANDS.items():
+        mod = importlib.import_module(f"ggdesk.commands.{name}")
+        mod.add_arguments(sub.add_parser(name, help=help_text))
     args = ap.parse_args(argv)
     if args.cmd == "version":
         print(f"ggdesk {__version__}")
         return 0
-    return _inspect(args.file)
+    if args.cmd == "inspect":
+        return _inspect(args.file)
+    mod = importlib.import_module(f"ggdesk.commands.{args.cmd}")
+    rc: int = mod.run(args)
+    return rc
 
 
 if __name__ == "__main__":

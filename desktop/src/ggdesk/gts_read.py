@@ -46,6 +46,17 @@ class Segment:
 Record = Command | Segment
 
 
+@dataclass(frozen=True)
+class Stroke:
+    """One decoded pen-down path: absolute positions (units) from PD to the next PU."""
+    offset: int                       # byte offset of its PD command
+    points: tuple[tuple[int, int], ...]
+
+    def to_driver(self) -> tuple[int, int, list[tuple[int, int]]]:
+        sx, sy = self.points[0]
+        return (sx, sy, [(b[0] - a[0], b[1] - a[1]) for a, b in zip(self.points, self.points[1:], strict=False)])
+
+
 @dataclass
 class Job:
     model_code: int
@@ -80,6 +91,30 @@ class Job:
                 out.append((x, y))
             elif r.op == "PU":
                 down = False
+        return out
+
+    def strokes(self) -> list[Stroke]:
+        """Pen-down paths: from each PD (its start point included) to the next PU."""
+        x = y = 0
+        out: list[Stroke] = []
+        cur: list[tuple[int, int]] | None = None
+        off = 0
+        for r in self.records:
+            if isinstance(r, Segment):
+                x += r.dx
+                y += r.dy
+                if cur is not None:
+                    cur.append((x, y))
+            elif r.op == "PD":
+                if cur is not None:
+                    out.append(Stroke(off, tuple(cur)))
+                cur = [(x, y)]
+                off = r.offset
+            elif r.op == "PU" and cur is not None:
+                out.append(Stroke(off, tuple(cur)))
+                cur = None
+        if cur is not None:
+            out.append(Stroke(off, tuple(cur)))
         return out
 
     def positions(self) -> list[tuple[int, int]]:

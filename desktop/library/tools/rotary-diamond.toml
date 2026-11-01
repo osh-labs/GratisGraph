@@ -1,0 +1,31 @@
+# The rotary diamond used for the 2026-10-29 cuts. Make and tip geometry not recorded.
+schema_version = 1
+kind = "tool"
+id = "rotary-diamond"
+version = 1
+name = "Rotary diamond (spindle-driven), as used in the 2026-10-29 cuts"
+type = "rotary_diamond"
+
+[sources.findings]
+title = "GTS protocol findings (research log)"
+path = "docs/PROTOCOL_FINDINGS.md"
+kind = "observation"
+
+[needs_spindle]
+value = true
+src = "findings"
+ref = "Rotary diamond cut (2026-10-29): cut with MC 1; spindle turns only with MC 1 and tool down"
+confidence = "CONFIRMED"
+
+[needs_nose]
+value = true
+src = "findings"
+ref = "Rotary diamond cut runs 1-3: no-nose cuts chattered and skipped; with the nose clean"
+confidence = "CONFIRMED"
+
+[tip_width_mm]
+null = true
+needs_measurement = true
+gap = "G3"
+measure = ["V3 step 2: trace a 10 mm line at the recipe settings on the blank",
+           "Measure the groove width at 3 points under a loupe or microscope; record the mean and range"]

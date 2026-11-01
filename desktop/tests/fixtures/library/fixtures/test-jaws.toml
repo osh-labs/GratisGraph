@@ -1,0 +1,39 @@
+schema_version = 1
+kind = "fixture"
+id = "test-jaws"
+version = 1
+name = "TEST ONLY: vise with two jaw keep-outs, measured tolerance"
+keep_outs_per_job = false
+
+[sources.test]
+title = "Test fixture (invented values)"
+path = "desktop/tests/fixtures/library/README.md"
+kind = "project_decision"
+
+[datum_mm]
+value = [0.0, 0.0]
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[[nests]]
+id = "centre"
+
+[nests.origin_mm]
+value = [50.0, 50.0]
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[keep_outs]
+value = [[[0.0, 20.0], [100.0, 20.0], [100.0, 28.0], [0.0, 28.0]],
+         [[0.0, 72.0], [100.0, 72.0], [100.0, 80.0], [0.0, 80.0]]]
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[tolerance_mm]
+value = 0.1
+src = "test"
+ref = "test"
+confidence = "DEFINED"
