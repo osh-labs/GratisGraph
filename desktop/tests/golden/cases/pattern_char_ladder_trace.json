@@ -1,0 +1,12 @@
+{
+  "job": "tests/golden/patterns/char-ladder-trace.ggj",
+  "note": "Bench pattern char-ladder-trace (M2.3) with default parameters",
+  "selection": {
+    "extra_keep_outs": [],
+    "fixture": "bare-bed",
+    "machine": "m20-iq",
+    "nest": "centre",
+    "overrides": {},
+    "recipe": "scrap-rotary-diamond-trace"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "job": "tests/golden/patterns/stepover-ladder.ggj",
+  "note": "Bench pattern stepover-ladder (M2.3) with default parameters",
+  "selection": {
+    "extra_keep_outs": [],
+    "fixture": "bare-bed",
+    "machine": "m20-iq",
+    "nest": "centre",
+    "overrides": {},
+    "recipe": "scrap-rotary-diamond-trace"
+  }
+}

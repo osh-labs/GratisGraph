@@ -20,6 +20,42 @@
       "bytes": 670,
       "sha256": "19606635672897b75d2e4374e7f195124373661a9295ce48a6b3c609c4f9a467"
     },
+    "pattern_asymmetric": {
+      "bytes": 622,
+      "sha256": "65a91013af7a9b54853d9c5208d12a03be2cd7c51f9b889a8c38313e366d95bc"
+    },
+    "pattern_char_ladder_fill": {
+      "bytes": 131716,
+      "sha256": "4b88d5fd7206e5690e9e26b423fb17383ae72761c90148d77504d00c1952559e"
+    },
+    "pattern_char_ladder_trace": {
+      "bytes": 20488,
+      "sha256": "d23cdffe9c0d4dae069ed46ca807ad4e52e159a4dc63575c8726fe42972929b7"
+    },
+    "pattern_corner_test": {
+      "bytes": 4198,
+      "sha256": "bf1a4fb3fc4a74ce888144bd006dba51897b49973f05bf0f8b211682ece71479"
+    },
+    "pattern_datum_crosshair": {
+      "bytes": 1174,
+      "sha256": "8477fc377e8390057353588e3adc263c365cbb4af8b659e68ae7235dadc99b9b"
+    },
+    "pattern_job_size_ladder": {
+      "bytes": 16384,
+      "sha256": "9b20ba601b335853e0fe1b23300b935e3e519dc73fe828162ad86a5ad405c7a8"
+    },
+    "pattern_pz_square": {
+      "bytes": 244,
+      "sha256": "353fdefbf485d12040698a752203897eeedead70fc1a23c6ba98f66dc7fa816a"
+    },
+    "pattern_repeat_batch": {
+      "bytes": 1372,
+      "sha256": "131e3b1e7502b8fb21be0e22f355874192752877fe2eba3ab480c550d9dcc920"
+    },
+    "pattern_stepover_ladder": {
+      "bytes": 28948,
+      "sha256": "38e1ee012febac55c6d7dcab4bca27a37d0ddaf8c6736b86d907ac2bd1e5977d"
+    },
     "square_10mm": {
       "bytes": 244,
       "sha256": "353fdefbf485d12040698a752203897eeedead70fc1a23c6ba98f66dc7fa816a"
