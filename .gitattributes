@@ -1,2 +1,8 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Byte-compared fixtures: never let line-ending conversion touch them
+*.m20 binary
+*.SPL binary
+*.bin binary
+*.gc text eol=lf
