@@ -44,9 +44,14 @@ data/*.dxf
 *.m20
 # ...but the golden corpus outputs are the drift guard and must be committed
 !tests/golden/outputs/*.m20
+# ...and the desktop goldens and bench package (desktop/docs/m1-plan.md section 4)
+!desktop/tests/golden/**/*.m20
+!desktop/bench/**/*.m20
 *.svg
 # ...but the committed web-app favicon must survive the blanket *.svg rule above
 !web/app/favicon.svg
+!desktop/bench/**/*.svg
+!desktop/docs/**/*.svg
 
 # USB sniffer captures
 *.bin

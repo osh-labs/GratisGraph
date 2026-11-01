@@ -1,7 +1,6 @@
 """Application entry point.
 
-M0 shell only: a main window with the version and a status line. The bench
-window (preview, gate report, send) is M1 (build plan F08).
+Shell: the main window, its BenchSession and the installers in extensions.py.
 """
 from __future__ import annotations
 
@@ -11,17 +10,21 @@ from collections.abc import Sequence
 from PySide6.QtWidgets import QApplication, QLabel, QMainWindow
 
 from ggdesk import __version__
+from ggdesk_app import extensions
+from ggdesk_app.session import BenchSession
 
 TITLE = "GratisGraph Desktop"
 
 
 class MainWindow(QMainWindow):
-    def __init__(self) -> None:
+    def __init__(self, session: BenchSession | None = None) -> None:
         super().__init__()
+        self.session = session if session is not None else BenchSession()
         self.setWindowTitle(f"{TITLE} {__version__}")
         self.setCentralWidget(QLabel("No job loaded."))
         self.statusBar().showMessage("Machine: not connected")
         self.resize(960, 640)
+        extensions.install_all(self)
 
 
 def self_test() -> int:

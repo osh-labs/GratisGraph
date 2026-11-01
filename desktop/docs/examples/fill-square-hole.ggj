@@ -1,0 +1,65 @@
+{
+  "format": "gratisgraph-job",
+  "version": 1,
+  "units": "mm",
+  "part": "bench-scrap-40",
+  "quantity": 1,
+  "reference": "filled square with a square hole (fill operation, M2)",
+  "source": {
+    "name": "hand-written example",
+    "version": "1"
+  },
+  "chord_tolerance_mm": 0.01,
+  "operations": [
+    {
+      "op": "fill",
+      "mode_hint": "fill",
+      "char_height_mm": 8.0,
+      "regions": [
+        {
+          "outer": [
+            [
+              -4.0,
+              -4.0
+            ],
+            [
+              4.0,
+              -4.0
+            ],
+            [
+              4.0,
+              4.0
+            ],
+            [
+              -4.0,
+              4.0
+            ]
+          ],
+          "holes": [
+            [
+              [
+                -1.0,
+                -1.0
+              ],
+              [
+                -1.0,
+                1.0
+              ],
+              [
+                1.0,
+                1.0
+              ],
+              [
+                1.0,
+                -1.0
+              ]
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "producer_note": {
+    "kept": "unknown keys are preserved"
+  }
+}

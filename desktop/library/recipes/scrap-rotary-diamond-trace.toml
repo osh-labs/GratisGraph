@@ -1,0 +1,76 @@
+# Probe run 3 (2026-10-29): the clean rotary diamond cut on scrap. Draft: three
+# cuts of 10 mm squares on unidentified scrap are the only evidence.
+schema_version = 1
+kind = "recipe"
+id = "scrap-rotary-diamond-trace"
+version = 1
+name = "Scrap aluminum, rotary diamond, single-line trace (probe run 3)"
+machine = "m20-iq"
+tool = "rotary-diamond"
+material = "scrap-aluminum"
+mode = "trace"
+status = "draft"
+
+[sources.findings]
+title = "GTS protocol findings, Rotary diamond cut (2026-10-29)"
+path = "docs/PROTOCOL_FINDINGS.md"
+kind = "observation"
+
+[sources.v0]
+title = "V0 operator sheet (run 3 byte layout)"
+path = "desktop/docs/validation/V0-builder-rotary.md"
+kind = "observation"
+
+[setup.mc]
+value = 1
+src = "findings"
+ref = "Rotary diamond cut run 3: MC 1"
+confidence = "CONFIRMED"
+
+[setup.vs]
+value = 10
+src = "findings"
+ref = "Rotary diamond cut run 3: VS 10"
+confidence = "CONFIRMED"
+
+[setup.vz]
+value = 5
+src = "findings"
+ref = "Rotary diamond cut run 3: VZ 5"
+confidence = "CONFIRMED"
+
+[setup.pz]
+value = 50
+src = "findings"
+ref = "Rotary diamond cut run 3: PZ 50 (units [HYPOTHESIS], G4)"
+confidence = "CONFIRMED"
+
+[setup.dz]
+value = 500
+src = "v0"
+ref = "V0 job table: DZ 500, as run 3"
+confidence = "CONFIRMED"
+
+[manual.nose_fitted]
+value = true
+src = "findings"
+ref = "Rotary diamond cut run 3: regulating nose"
+confidence = "CONFIRMED"
+
+[manual.knob_notches]
+value = 5
+src = "findings"
+ref = "Rotary diamond cut run 3: knob 2 notches light, 5 notches good depth"
+confidence = "CONFIRMED"
+
+[manual.pressure]
+value = 2
+src = "findings"
+ref = "Rotary diamond cut run 3: pressure 2"
+confidence = "CONFIRMED"
+
+[min_char_height_mm]
+null = true
+needs_measurement = true
+gap = "G5"
+measure = ["V3 character-height ladder (trace mode): smallest height read without magnification by 3 people"]

@@ -1,0 +1,38 @@
+# A declared engrave area for bench patterns on scrap stock, used until the tag
+# blank is measured. The values are a definition (DEFINED): the operator clamps
+# stock that covers this area, centred on the bare-bed nest. Not a measurement.
+schema_version = 1
+kind = "part"
+id = "bench-scrap-40"
+version = 1
+name = "Bench scrap, 40 x 40 mm declared area"
+material = "scrap-aluminum"
+
+[sources.decisions]
+title = "Desktop decisions log (bench part)"
+path = "desktop/docs/decisions.md"
+kind = "project_decision"
+
+[outline]
+value = { kind = "rect", width_mm = 40.0, height_mm = 40.0, corner_radius_mm = 0.0 }
+src = "decisions"
+ref = "2026-11-01 bench part bench-scrap-40"
+confidence = "DEFINED"
+
+[holes]
+value = []
+src = "decisions"
+ref = "2026-11-01 bench part bench-scrap-40"
+confidence = "DEFINED"
+
+[keep_out_margin_mm]
+value = 2.0
+src = "decisions"
+ref = "2026-11-01 bench part bench-scrap-40"
+confidence = "DEFINED"
+
+[thickness_mm]
+null = true
+needs_measurement = true
+gap = "G1"
+measure = ["Calipers on the scrap piece, 3 points; record in the bench log"]

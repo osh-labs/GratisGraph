@@ -1,0 +1,23 @@
+schema_version = 1
+kind = "material"
+id = "tag-aluminum"
+version = 1
+name = "Dog tag blank aluminum (supplier not yet chosen)"
+
+[alloy]
+null = true
+needs_measurement = true
+gap = "G1"
+measure = ["Take the alloy from the chosen supplier's specification sheet; record the document"]
+
+[finish]
+null = true
+needs_measurement = true
+gap = "G1"
+measure = ["Record bare or anodized (and colour) from the supplier and by eye on 5 blanks"]
+
+[thickness_mm]
+null = true
+needs_measurement = true
+gap = "G1"
+measure = ["Calipers on 5 blanks, 3 points each; record mean and range"]

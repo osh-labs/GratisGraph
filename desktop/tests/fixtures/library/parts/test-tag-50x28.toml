@@ -1,0 +1,35 @@
+schema_version = 1
+kind = "part"
+id = "test-tag-50x28"
+version = 1
+name = "TEST ONLY: rounded tag 50 x 28 mm with a hole"
+material = "scrap-aluminum"
+
+[sources.test]
+title = "Test fixture (invented values)"
+path = "desktop/tests/fixtures/library/README.md"
+kind = "project_decision"
+
+[outline]
+value = { kind = "rect", width_mm = 50.0, height_mm = 28.0, corner_radius_mm = 3.0 }
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[holes]
+value = [{ kind = "rect", width_mm = 3.0, height_mm = 3.0, corner_radius_mm = 1.5, centre_mm = [-21.0, 0.0] }]
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[keep_out_margin_mm]
+value = 1.5
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[thickness_mm]
+value = 1.0
+src = "test"
+ref = "test"
+confidence = "DEFINED"

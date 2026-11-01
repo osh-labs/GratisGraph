@@ -36,6 +36,9 @@ jobs:
       - name: Types (core)
         working-directory: desktop
         run: python -m mypy src/ggdesk
+      - name: Library
+        working-directory: desktop
+        run: python -m ggdesk.cli library validate
       - name: Test (core)
         working-directory: desktop
         run: python -m pytest -q -m "not gui" tests/unit

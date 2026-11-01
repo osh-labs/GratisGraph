@@ -1,0 +1,96 @@
+# Gravograph M20 IQ+ (model code 0x020D), the v1 target (build plan 6.2).
+schema_version = 1
+kind = "machine"
+id = "m20-iq"
+version = 1
+name = "Gravograph M20 IQ+"
+send_enabled = true
+completion = "et_after_cm1"   # one !ET after !CM 4; = 1 per green press (GTS_FORMAT.md 6)
+
+[sources.format]
+title = "GTS wire format specification"
+path = "docs/GTS_FORMAT.md"
+kind = "observation"
+
+[sources.findings]
+title = "GTS protocol findings (research log)"
+path = "docs/PROTOCOL_FINDINGS.md"
+kind = "observation"
+
+[sources.driver]
+title = "GratisGraph driver M20_PROFILE"
+path = "gts_api.py"
+kind = "driver"
+
+[sources.decisions]
+title = "Desktop decisions log"
+path = "desktop/docs/decisions.md"
+kind = "project_decision"
+
+[model_code]
+value = 525
+src = "findings"
+ref = "M20 IQ on Linux (2026-10-28): header 0x24 must be 02 0D"
+confidence = "CONFIRMED"
+
+[work_field_mm]
+value = [100.0, 100.0]
+src = "driver"
+ref = "M20_PROFILE envelope_mm (not measured on the IQ)"
+confidence = "STRONG"
+
+[opcodes]
+allowed = ["DR", "MC", "VS", "VZ", "PZ", "DZ", "VD", "ZA", "PD", "PU", "JF"]
+reserved = ["LB", "NR"]   # wire-confirmed on the IQ, not emitted in M1/M2
+src = "format"
+ref = "GTS_FORMAT.md 5.3 opcode table, rows marked wire / wire (IQ)"
+confidence = "CONFIRMED"
+
+# Hard ranges are the observed envelope: the gate refuses untested values (decisions.md).
+[ranges.mc]
+min = 0
+max = 1
+src = "format"
+ref = "GTS_FORMAT.md 5.3: MC 1 = spindle on, 0 = off"
+confidence = "CONFIRMED"
+
+[ranges.vs]
+min = 10
+max = 40
+src = "findings"
+ref = "Resolved questions 2 (VS 10/25/40 telemetry, Express); rotary diamond cut (VS 10, 15, 25, IQ)"
+confidence = "CONFIRMED"
+
+[ranges.vz]
+min = 5
+max = 40
+src = "findings"
+ref = "Rotary diamond cut runs 1-3 (VZ 5, 25, IQ); VZ = VS in builder jobs up to 40"
+confidence = "CONFIRMED"
+
+[ranges.pz]
+min = 0
+max = 100
+src = "format"
+ref = "GTS_FORMAT.md 5.3 Depth (PZ): Quick drives PZ 0..100; IQ cuts at PZ 5..50"
+confidence = "STRONG"
+
+[ranges.dz]
+min = 100
+max = 500
+src = "format"
+ref = "GTS_FORMAT.md 5.3: DZ 500 in every capture; vendor per-pass default DZ 100"
+confidence = "STRONG"
+
+[ranges.vd]
+min = 15
+max = 15
+src = "findings"
+ref = "M20 IQ Hardware Probes: VD 15 in setup accepted (one value)"
+confidence = "CONFIRMED"
+
+[max_job_bytes]
+null = true
+needs_measurement = true
+gap = "G9"
+measure = ["V3 job-size ladder: send fills of increasing size; record acceptance (!JF, beep) and !ET for each"]

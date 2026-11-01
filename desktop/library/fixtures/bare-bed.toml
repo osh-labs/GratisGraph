@@ -1,0 +1,41 @@
+# Built-in bench fixture: no nest hardware. Datum = machine home; one nest at
+# the work-field centre; keep-outs (vise jaws) entered per job with --keep-out.
+schema_version = 1
+kind = "fixture"
+id = "bare-bed"
+version = 1
+name = "Bare bed (bench, vise)"
+keep_outs_per_job = true
+
+[sources.decisions]
+title = "Desktop decisions log (bench fixture)"
+path = "desktop/docs/decisions.md"
+kind = "project_decision"
+
+[datum_mm]
+value = [0.0, 0.0]
+src = "decisions"
+ref = "2026-11-01 bench fixture bare-bed: datum = machine home"
+confidence = "DEFINED"
+
+[[nests]]
+id = "centre"
+
+[nests.origin_mm]
+value = [50.0, 50.0]
+src = "decisions"
+ref = "2026-11-01 bench fixture bare-bed: work-field centre"
+confidence = "DEFINED"
+
+[keep_outs]
+value = []
+src = "decisions"
+ref = "2026-11-01 bench fixture bare-bed: keep-outs entered per job"
+confidence = "DEFINED"
+
+[tolerance_mm]
+null = true
+needs_measurement = true
+gap = "G15"
+measure = ["V1: engrave the asymmetric pattern and datum crosshair; measure the crosshair centre from the stock edges",
+           "Repeat on 3 pieces; tolerance = largest deviation from the commanded position"]
