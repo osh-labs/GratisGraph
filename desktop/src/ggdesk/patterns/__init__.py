@@ -66,3 +66,6 @@ def coerce(p: Pattern, raw: Mapping[str, Any]) -> dict[str, Any]:
         except (TypeError, ValueError) as e:
             raise PatternError(f"{p.name}: parameter {k} expects {t.__name__}, got {v!r}") from e
     return out
+
+
+from ggdesk.patterns import builtin as _builtin  # noqa: E402,F401  (registers the built-in patterns)

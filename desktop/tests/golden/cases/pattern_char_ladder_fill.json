@@ -1,0 +1,15 @@
+{
+  "job": "tests/golden/patterns/char-ladder-fill.ggj",
+  "note": "Bench pattern char-ladder-fill (M2.3) with default parameters: fill recipe with bench placeholders tip_width_mm 0.2, stepover_mm 0.1",
+  "selection": {
+    "extra_keep_outs": [],
+    "fixture": "bare-bed",
+    "machine": "m20-iq",
+    "nest": "centre",
+    "overrides": {
+      "stepover_mm": 0.1,
+      "tip_width_mm": 0.2
+    },
+    "recipe": "scrap-rotary-diamond-fill"
+  }
+}
