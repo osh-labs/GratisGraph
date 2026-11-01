@@ -30,6 +30,8 @@ STATUS: dict[str, str] = {
     "pass": "#15803d",
     "error": "#b91c1c",
     "muted": "#4b5563",
+    "draft": "#b45309",          # a draft recipe in the recipe selector and setup card (M2.4)
+    "unmeasured": "#b45309",     # a needs_measurement fact in the library browser (M2.4)
 }
 
 # Pen widths in device pixels (cosmetic: they do not scale with zoom).

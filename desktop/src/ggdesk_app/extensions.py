@@ -10,6 +10,9 @@ from typing import Any
 
 INSTALLERS: tuple[str, ...] = (
     "ggdesk_app.bench:install",
+    "ggdesk_app.panels.patterns:install",
+    "ggdesk_app.panels.setup_card:install",
+    "ggdesk_app.panels.library:install",
 )
 
 
