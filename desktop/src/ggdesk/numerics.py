@@ -25,6 +25,11 @@ def to_units(mm: float) -> int:
     return int(round(mm * UNITS_PER_MM))
 
 
+def to_units_pt(p: tuple[float, float]) -> tuple[int, int]:
+    """A point in mm -> device units: one to_units per coordinate (never quantise twice)."""
+    return (to_units(p[0]), to_units(p[1]))
+
+
 def to_mm(units: int) -> float:
     """Device units -> mm."""
     return units / UNITS_PER_MM

@@ -1,0 +1,12 @@
+{
+  "job": "tests/fixtures/jobs/multi-stroke.ggj",
+  "note": "Two operations, ten strokes, closed paths, half-unit coordinates: ordering and half-to-even",
+  "selection": {
+    "extra_keep_outs": [],
+    "fixture": "bare-bed",
+    "machine": "m20-iq",
+    "nest": "centre",
+    "overrides": {},
+    "recipe": "scrap-rotary-diamond-trace"
+  }
+}
