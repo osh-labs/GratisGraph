@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import importlib
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -16,8 +16,10 @@ from typing import Any
 from ggdesk import paths
 from ggdesk.formats import job as job_format
 from ggdesk.gate import GateReport, acknowledged
-from ggdesk.library import Library, Selection, load_library
+from ggdesk.library import Library, Recipe, Selection, load_library, resolve
 from ggdesk.model.job import Job
+from ggdesk.patterns import Pattern
+from ggdesk.setupcard import SetupCard
 
 
 @dataclass
@@ -30,6 +32,7 @@ class SessionState:
     report: GateReport | None = None
     error: str | None = None            # last build or load error, shown to the operator
     status: str = "No job loaded."
+    job_label: str | None = None        # shown instead of a file name for a job made in memory (patterns)
 
 
 class SendNotAllowed(RuntimeError):
@@ -86,6 +89,57 @@ class BenchSession:
                                   job_sha256=hashlib.sha256(text.encode("utf-8")).hexdigest(),
                                   selection=self.state.selection, status=f"Opened {Path(path).name}.")
         self._changed()
+
+    def open_generated(self, job: Job, label: str) -> None:
+        """Adopt an in-memory job (a generated pattern) the way open_job adopts a file.
+
+        The job text is `formats.job.dumps(job)`, so the sha256 is the one the same
+        job would have if saved and reopened. The selection is kept.
+        """
+        text = job_format.dumps(job)
+        self.state = SessionState(job=job, job_sha256=hashlib.sha256(text.encode("utf-8")).hexdigest(),
+                                  selection=self.state.selection, job_label=label,
+                                  status=f"Generated {label}.")
+        self._changed()
+
+    # --- M2.4 additions: read-only views for the pattern, recipe and setup-card panels ----------
+
+    def patterns(self) -> Mapping[str, Pattern]:
+        """The registered bench patterns (ggdesk.patterns.PATTERNS), read at call time."""
+        from ggdesk.patterns import PATTERNS
+
+        return PATTERNS
+
+    def generate_pattern(self, name: str, raw: Mapping[str, Any]) -> Job:
+        """Coerce `raw` against the pattern's ParamSpecs, generate, and open the job.
+
+        Raises PatternError (or KeyError for an unknown name); the caller shows it.
+        """
+        from ggdesk.patterns import coerce
+
+        pattern = self.patterns()[name]
+        params = coerce(pattern, raw)
+        job = pattern.generate(**params)
+        args = ", ".join(f"{k}={v}" for k, v in sorted(params.items()))
+        self.open_generated(job, f"pattern {name}" + (f" ({args})" if args else ""))
+        return job
+
+    def recipes_for(self, machine: str) -> list[Recipe]:
+        """Every recipe of `machine` in the library, sorted by id (draft and confirmed)."""
+        return [r for _, r in sorted(self.library.recipes.items()) if r.machine == machine]
+
+    def setup_card(self) -> SetupCard | None:
+        """The setup card for the current job and selection, or None without a job.
+
+        Raises SelectionError / ValueError / KeyError when the selection does not
+        resolve; the panel shows the message.
+        """
+        from ggdesk.setupcard import setup_card
+
+        st = self.state
+        if st.job is None:
+            return None
+        return setup_card(resolve(self.library, st.job, st.selection))
 
     def select(self, selection: Selection) -> None:
         self.state.selection = selection

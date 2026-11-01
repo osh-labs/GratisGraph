@@ -25,6 +25,7 @@ from ggdesk.commands.selection import UsageError, parse_keep_out, parse_override
 from ggdesk.library import Selection
 from ggdesk.library.select import DEFAULT_MACHINE
 from ggdesk_app import theme
+from ggdesk_app.panels.recipe import RecipeSelector
 from ggdesk_app.session import BenchSession, SessionState
 
 JOB_FILTER = "GratisGraph job (*.ggj);;All files (*)"
@@ -53,8 +54,7 @@ class JobPanel(QWidget):
         self.job_label = QLabel("No job loaded.")
         self.job_label.setWordWrap(True)
         self.machine = DEFAULT_MACHINE if DEFAULT_MACHINE in lib.machines else next(iter(sorted(lib.machines)), "")
-        self.recipe = QComboBox()
-        self.recipe.addItems(sorted(r for r, e in lib.recipes.items() if e.machine == self.machine))
+        self.recipe = RecipeSelector(session, self.machine)     # id, mode, status; draft marked (M2.4)
         self.fixture = QComboBox()
         self.fixture.addItems(sorted(lib.fixtures))
         if "bare-bed" in lib.fixtures:
@@ -87,7 +87,7 @@ class JobPanel(QWidget):
         self._fill_nests()
         self.open_btn.clicked.connect(self._open_dialog)
         self.fixture.currentTextChanged.connect(self._fixture_changed)
-        self.recipe.currentTextChanged.connect(self.apply)
+        self.recipe.currentIndexChanged.connect(self.apply)
         self.nest.currentTextChanged.connect(self.apply)
         self.overrides.editingFinished.connect(self.apply)
         self.keep_outs.editingFinished.connect(self.apply)
@@ -109,7 +109,10 @@ class JobPanel(QWidget):
         self.apply()
 
     def _on_state(self, st: SessionState) -> None:
-        if st.job_path is None:
+        if st.job_path is None and st.job is not None:
+            self.job_label.setText(f"{st.job_label or 'generated job'}  (part {st.job.part}, "
+                                   f"{len(st.job.operations)} operation(s))")
+        elif st.job_path is None:
             self.job_label.setText("No job loaded.")
         elif st.job is None:
             self.job_label.setText(f"{st.job_path.name}: rejected")
@@ -129,7 +132,7 @@ class JobPanel(QWidget):
     def selection(self) -> Selection:
         """The selection the widgets describe (raises UsageError on unreadable text)."""
         kos = parse_keep_out_text(self.keep_outs.text()) if self.keep_outs.isEnabled() else ()
-        return Selection(self.machine, self.recipe.currentText(), self.fixture.currentText(),
+        return Selection(self.machine, self.recipe.recipe_id(), self.fixture.currentText(),
                          self.nest.currentText(), parse_override_text(self.overrides.text()), kos)
 
     def apply(self) -> None:

@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QLineEdit, QSplitter, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QDockWidget, QHBoxLayout, QLabel, QLineEdit, QMenu, QSplitter, QVBoxLayout, QWidget
 
 from ggdesk.gts_read import GtsFormatError
 from ggdesk.library import Resolved, resolve
@@ -110,3 +110,27 @@ def install(window: Any) -> None:
     bench = BenchWidget(window.session, window)
     window.setCentralWidget(bench)
     window.bench = bench
+
+
+def add_dock(window: Any, widget: QWidget, title: str, area: Qt.DockWidgetArea, name: str,
+             tabify_with: QDockWidget | None = None) -> QDockWidget:
+    """Host an M2 panel beside the bench (outside BenchWidget) as a dock with a View menu toggle.
+
+    Docks keep the bench's own widget tree unchanged (its tests check that it
+    holds no check box or override control); a pattern form's check boxes live here.
+    """
+    dock = QDockWidget(title, window)
+    dock.setObjectName(name)
+    dock.setWidget(widget)
+    dock.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetMovable
+                     | QDockWidget.DockWidgetFeature.DockWidgetFloatable
+                     | QDockWidget.DockWidgetFeature.DockWidgetClosable)
+    window.addDockWidget(area, dock)
+    if tabify_with is not None:
+        window.tabifyDockWidget(tabify_with, dock)
+    menu = getattr(window, "view_menu", None)
+    if not isinstance(menu, QMenu):
+        menu = window.menuBar().addMenu("&View")
+        window.view_menu = menu
+    menu.addAction(dock.toggleViewAction())
+    return dock
