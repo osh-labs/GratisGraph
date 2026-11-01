@@ -1,0 +1,12 @@
+{
+  "job": "docs/examples/square-10mm.ggj",
+  "note": "Closed 10 mm square at the part origin (the closing point is appended)",
+  "selection": {
+    "extra_keep_outs": [],
+    "fixture": "bare-bed",
+    "machine": "m20-iq",
+    "nest": "centre",
+    "overrides": {},
+    "recipe": "scrap-rotary-diamond-trace"
+  }
+}
