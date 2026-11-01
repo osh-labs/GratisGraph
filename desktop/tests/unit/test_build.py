@@ -131,13 +131,14 @@ def test_refuses_unmeasured_placement(lib: Library) -> None:
         build(job, lib, Selection(recipe=RECIPE, fixture="dog-tag-nest"))
 
 
-def test_refuses_fill(lib: Library) -> None:
+def test_refuses_fill_with_trace_recipe(lib: Library) -> None:
+    # M2.1 builds fill operations, but only with a fill recipe (tests/unit/test_fill_build.py).
     job = jf.load(EXAMPLES / "fill-square-hole.ggj")
-    with pytest.raises(BuildError, match=r"fill operations are not implemented in this build \(M2\)"):
+    with pytest.raises(BuildError, match=r"operations\[0\]: a fill operation needs a fill recipe"):
         build(job, lib, SEL)
     mixed = _job(TraceOp((Polyline(((0.0, 0.0), (1.0, 0.0))),)),
                  FillOp((Region(((0.0, 0.0), (1.0, 0.0), (1.0, 1.0))),)))
-    with pytest.raises(BuildError, match=r"operations\[1\]: fill"):
+    with pytest.raises(BuildError, match=r"operations\[1\]: a fill operation needs a fill recipe"):
         build(mixed, lib, SEL)
 
 

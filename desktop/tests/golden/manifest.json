@@ -4,6 +4,18 @@
       "bytes": 622,
       "sha256": "65a91013af7a9b54853d9c5208d12a03be2cd7c51f9b889a8c38313e366d95bc"
     },
+    "fill_hatch45": {
+      "bytes": 6418,
+      "sha256": "f9ef9560c0796db6060e92b9d5db3235dc00d4b6d6a7eb34a74e481f018955d7"
+    },
+    "fill_narrow": {
+      "bytes": 2434,
+      "sha256": "4b7033d501996fd6025be00c94a2110ece27c1c339f35aae98415d0389e311fb"
+    },
+    "fill_square_hole": {
+      "bytes": 3034,
+      "sha256": "927b7f1d08a92b1ae66544f9d5fc9dfd8fa71040a02f6869569589366b66d38a"
+    },
     "multi_stroke": {
       "bytes": 670,
       "sha256": "19606635672897b75d2e4374e7f195124373661a9295ce48a6b3c609c4f9a467"

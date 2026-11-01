@@ -1,0 +1,12 @@
+{
+  "job": "docs/examples/fill-square-hole.ggj",
+  "note": "Fill (M2.1): 8 mm square with a 2 mm square hole, test tool 0.2 mm tip, stepover 0.2 mm, hatch 0 deg, contour pass",
+  "selection": {
+    "extra_keep_outs": [],
+    "fixture": "bare-bed",
+    "machine": "m20-iq",
+    "nest": "centre",
+    "overrides": {},
+    "recipe": "test-confirmed-fill"
+  }
+}
