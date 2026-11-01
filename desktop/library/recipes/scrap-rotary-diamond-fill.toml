@@ -1,0 +1,96 @@
+# Fill-mode bench recipe on scrap. Setup copied from probe run 3, which was a
+# trace cut: for fill these values are [HYPOTHESIS] (no fill has been cut).
+# Stepover waits on the V3 stepover ladder (G6); the tip width on V3 step 2 (G3).
+schema_version = 1
+kind = "recipe"
+id = "scrap-rotary-diamond-fill"
+version = 1
+name = "Scrap aluminum, rotary diamond, fill (run-3 settings, unproven for fill)"
+machine = "m20-iq"
+tool = "rotary-diamond"
+material = "scrap-aluminum"
+mode = "fill"
+status = "draft"
+
+[sources.findings]
+title = "GTS protocol findings, Rotary diamond cut (2026-10-29)"
+path = "docs/PROTOCOL_FINDINGS.md"
+kind = "observation"
+
+[sources.decisions]
+title = "Desktop decisions log (fill recipe choices)"
+path = "desktop/docs/decisions.md"
+kind = "project_decision"
+
+[setup.mc]
+value = 1
+src = "findings"
+ref = "Rotary diamond cut run 3: MC 1 (trace cut; fill not observed)"
+confidence = "HYPOTHESIS"
+
+[setup.vs]
+value = 10
+src = "findings"
+ref = "Rotary diamond cut run 3: VS 10 (trace cut; fill not observed)"
+confidence = "HYPOTHESIS"
+
+[setup.vz]
+value = 5
+src = "findings"
+ref = "Rotary diamond cut run 3: VZ 5 (trace cut; fill not observed)"
+confidence = "HYPOTHESIS"
+
+[setup.pz]
+value = 50
+src = "findings"
+ref = "Rotary diamond cut run 3: PZ 50 (trace cut; fill not observed; units G4)"
+confidence = "HYPOTHESIS"
+
+[setup.dz]
+value = 500
+src = "findings"
+ref = "DZ 500 as run 3 (trace cut; fill not observed)"
+confidence = "HYPOTHESIS"
+
+[manual.nose_fitted]
+value = true
+src = "findings"
+ref = "Rotary diamond cut run 3: regulating nose"
+confidence = "HYPOTHESIS"
+
+[manual.knob_notches]
+value = 5
+src = "findings"
+ref = "Rotary diamond cut run 3: knob 5 notches (trace cut)"
+confidence = "HYPOTHESIS"
+
+[manual.pressure]
+value = 2
+src = "findings"
+ref = "Rotary diamond cut run 3: pressure 2 (trace cut)"
+confidence = "HYPOTHESIS"
+
+[min_char_height_mm]
+null = true
+needs_measurement = true
+gap = "G5"
+measure = ["V3 character-height ladder (fill mode): smallest height read without magnification by 3 people"]
+
+[fill.stepover_mm]
+null = true
+needs_measurement = true
+gap = "G6"
+measure = ["V3 stepover ladder: pick the largest stepover with no visible ridges at arm's length",
+           "Record it with the tip width measured in V3 step 2"]
+
+[fill.hatch_angle_deg]
+value = 0.0
+src = "decisions"
+ref = "2026-11-01 fill defaults: hatch along +X (a choice, revisit after V3)"
+confidence = "DEFINED"
+
+[fill.contour_pass]
+value = true
+src = "decisions"
+ref = "2026-11-01 fill defaults: contour pass on (a choice, revisit after V3)"
+confidence = "DEFINED"

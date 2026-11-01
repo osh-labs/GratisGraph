@@ -4,21 +4,26 @@ from __future__ import annotations
 from typing import Any
 
 from ggdesk.gate.types import GateInputs
-from ggdesk.library.model import Fact
+from ggdesk.library.model import Fact, Recipe
 
 
 def _v(f: Fact[Any], fmt: str = "{}") -> str:
     return fmt.format(f.value) if f.known else "unknown"
 
 
+def manual_depth_line(rec: Recipe) -> str:
+    """The manual-depth line every report and the setup card print (build plan 9.3)."""
+    m = rec.manual
+    nose = "unknown" if not m.nose_fitted.known else ("fitted" if m.nose_fitted.value else "not fitted")
+    return (f"Depth is set by hand: nose {nose}, knob {_v(m.knob_notches)} notches, pressure {_v(m.pressure)}. "
+            "Software cannot verify these.")
+
+
 def residual_lines(inputs: GateInputs) -> tuple[str, ...]:
     r = inputs.resolved
     rec = r.recipe
-    m = rec.manual
-    nose = "unknown" if not m.nose_fitted.known else ("fitted" if m.nose_fitted.value else "not fitted")
     lines = [
-        f"Depth is set by hand: nose {nose}, knob {_v(m.knob_notches)} notches, pressure {_v(m.pressure)}. "
-        "Software cannot verify these.",
+        manual_depth_line(rec),
         f"Recipe {rec.ref.id} v{rec.ref.version} is {rec.status}"
         + (" (not yet validated on the target part)." if rec.status == "draft" else "."),
     ]
