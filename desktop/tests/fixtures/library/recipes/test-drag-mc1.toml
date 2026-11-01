@@ -1,0 +1,69 @@
+schema_version = 1
+kind = "recipe"
+id = "test-drag-mc1"
+version = 1
+name = "TEST ONLY: inconsistent recipe: drag tool with MC 1 (gate H6 mutant)"
+machine = "m20-iq"
+tool = "test-drag-tool"
+material = "scrap-aluminum"
+mode = "trace"
+status = "confirmed"
+
+[sources.test]
+title = "Test fixture (invented values)"
+path = "desktop/tests/fixtures/library/README.md"
+kind = "project_decision"
+
+[setup.mc]
+value = 1
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[setup.vs]
+value = 10
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[setup.vz]
+value = 5
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[setup.pz]
+value = 50
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[setup.dz]
+value = 500
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[manual.nose_fitted]
+value = true
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[manual.knob_notches]
+value = 5
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[manual.pressure]
+value = 2
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[min_char_height_mm]
+value = 2.0
+src = "test"
+ref = "test"
+confidence = "DEFINED"

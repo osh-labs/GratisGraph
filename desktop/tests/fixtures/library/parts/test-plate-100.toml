@@ -1,0 +1,35 @@
+schema_version = 1
+kind = "part"
+id = "test-plate-100"
+version = 1
+name = "TEST ONLY: 100 x 100 mm plate covering the work field, no margin (gate boundary tests)"
+material = "scrap-aluminum"
+
+[sources.test]
+title = "Test fixture (invented values)"
+path = "desktop/tests/fixtures/library/README.md"
+kind = "project_decision"
+
+[outline]
+value = { kind = "rect", width_mm = 100.0, height_mm = 100.0, corner_radius_mm = 0.0 }
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[holes]
+value = []
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[keep_out_margin_mm]
+value = 0.0
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[thickness_mm]
+value = 1.0
+src = "test"
+ref = "test"
+confidence = "DEFINED"

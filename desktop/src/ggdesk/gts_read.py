@@ -47,6 +47,26 @@ Record = Command | Segment
 
 
 @dataclass(frozen=True)
+class Move:
+    """One segment record with the head state it runs in (added for the output gate rules).
+
+    `start` and `end` are absolute positions (units) integrated from home (0, 0).
+    `down` is True between a PD and the next PU (any argument): a pen-down move;
+    otherwise the segment is a rapid (a stroke header or the return home).
+    `index` is the record's position in Job.records.
+    """
+    segment: Segment
+    index: int
+    start: tuple[int, int]
+    end: tuple[int, int]
+    down: bool
+
+    @property
+    def offset(self) -> int:
+        return self.segment.offset
+
+
+@dataclass(frozen=True)
 class Stroke:
     """One decoded pen-down path: absolute positions (units) from PD to the next PU."""
     offset: int                       # byte offset of its PD command
@@ -115,6 +135,22 @@ class Job:
                 cur = None
         if cur is not None:
             out.append(Stroke(off, tuple(cur)))
+        return out
+
+    def moves(self) -> list[Move]:
+        """Every segment record in order, with its start, end and whether the tool is down."""
+        x = y = 0
+        down = False
+        out: list[Move] = []
+        for i, r in enumerate(self.records):
+            if isinstance(r, Segment):
+                nx, ny = x + r.dx, y + r.dy
+                out.append(Move(r, i, (x, y), (nx, ny), down))
+                x, y = nx, ny
+            elif r.op == "PD":
+                down = True
+            elif r.op == "PU":
+                down = False
         return out
 
     def positions(self) -> list[tuple[int, int]]:
