@@ -65,7 +65,7 @@
       "severity": "soft"
     },
     {
-      "message": "operation 0 region 3 is 0.2 mm wide, narrower than the tip: left unengraved",
+      "message": "operation 0 region 3 is 0.21 mm wide, narrower than the tip: left unengraved",
       "offset": null,
       "rule": "S3",
       "severity": "soft"
@@ -77,13 +77,13 @@
       "severity": "soft"
     },
     {
-      "message": "operation 0 region 5 is 0.19 mm wide, narrower than the tip: left unengraved",
+      "message": "operation 0 region 5 is 0.2 mm wide, narrower than the tip: left unengraved",
       "offset": null,
       "rule": "S3",
       "severity": "soft"
     },
     {
-      "message": "operation 1 region 5 is 0.07 mm wide, narrower than the tip: left unengraved",
+      "message": "operation 1 region 5 is 0.2 mm wide, narrower than the tip: left unengraved",
       "offset": null,
       "rule": "S3",
       "severity": "soft"
@@ -108,6 +108,7 @@
     "Not measured: fixture tolerance (G15).",
     "Not measured: minimum character height (G5).",
     "Not measured: tool tip width (G3).",
+    "Not measured: fill stepover (G6): a bench override is in use (placeholder until V3 part C).",
     "Job size limit not measured (G9): H11 inactive.",
     "Work field 100 x 100 mm is [STRONG] (M20_PROFILE envelope_mm (not measured on the IQ)), not measured on this machine.",
     "PZ units are [HYPOTHESIS] (likely 0.01 mm overtravel with the nose; G4).",

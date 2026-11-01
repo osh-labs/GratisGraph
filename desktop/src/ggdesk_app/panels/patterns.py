@@ -35,17 +35,9 @@ from ggdesk_app.session import BenchSession
 
 INT_LIMIT = 2_000_000_000          # QSpinBox holds a 32-bit int
 FLOAT_LIMIT = 1.0e9
-MIN_DECIMALS = 4
 MAX_DECIMALS = 10
 
 
-def _decimals(default: Any) -> int:
-    """Enough decimals to show the default exactly (so an untouched field passes the default back)."""
-    text = repr(float(default))
-    if "e" in text or "E" in text:
-        return MAX_DECIMALS
-    frac = text.split(".", 1)[1] if "." in text else ""
-    return max(MIN_DECIMALS, min(MAX_DECIMALS, len(frac.rstrip("0"))))
 
 
 def param_widget(spec: ParamSpec) -> QWidget:
@@ -62,7 +54,7 @@ def param_widget(spec: ParamSpec) -> QWidget:
         w = sb
     elif spec.type is float:
         db = QDoubleSpinBox()
-        db.setDecimals(_decimals(spec.default))
+        db.setDecimals(MAX_DECIMALS)   # never round what the operator types (M2 review, finding 7)
         db.setRange(-FLOAT_LIMIT, FLOAT_LIMIT)
         db.setValue(float(spec.default))
         w = db

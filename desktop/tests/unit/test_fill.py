@@ -108,9 +108,30 @@ def test_tiny_region_that_vanishes_is_reported() -> None:
     assert 0.08 <= r.narrow[0].width_mm <= 0.1
 
 
-def test_corners_are_not_narrow() -> None:
-    tri = Region(((0.0, 0.0), (10.0, 0.0), (5.0, 1.0)))     # sharp acute corners, wide body
-    assert fill(FillOp((tri, Region(_sq(3.0, 20.0)))), 0, P).narrow == ()
+def test_acute_corners_are_reported() -> None:
+    """M2 review, finding 1: a round tip cannot reach into acute corners; that material is reported (S3).
+    Right-angle corners leave less than the sliver threshold and are not."""
+    tri = Region(((0.0, 0.0), (10.0, 0.0), (5.0, 1.0)))     # 11 degree corners, wide body
+    square = Region(_sq(3.0, 20.0))
+    r = fill(FillOp((tri, square)), 0, P)
+    assert [n.region_index for n in r.narrow] == [0]
+    assert r.paths                                           # the body is still engraved
+
+
+def test_wedge_tip_reported() -> None:
+    """The review's scenario: a 10 degree, 20 mm wedge with a 0.5 mm tip leaves about 0.65 mm^2 at the apex."""
+    from ggdesk import numerics
+    c, s_ = numerics.cos_sin_deg(5.0)
+    wedge = Region(((0.0, 0.0), (20.0 * c, -20.0 * s_), (20.0 * c, 20.0 * s_)))
+    r = fill(FillOp((wedge,)), 0, FillParams(0.5, 0.1, 0.0, True))
+    assert len(r.narrow) == 1
+
+
+def test_thin_region_between_hatch_lines_reported_without_contour() -> None:
+    """M2 review, finding 2: contour off, a 0.28 mm strip falls between hatch lines and gets no path."""
+    strip = Region(((0.0, 0.11), (10.0, 0.11), (10.0, 0.39), (0.0, 0.39)))
+    r = fill(FillOp((strip,)), 0, FillParams(0.2, 0.1, 0.0, False))
+    assert r.paths == () and len(r.narrow) == 1
 
 
 def test_invalid_region_names_the_region() -> None:

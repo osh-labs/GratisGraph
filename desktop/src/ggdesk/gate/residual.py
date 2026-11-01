@@ -36,6 +36,10 @@ def residual_lines(inputs: GateInputs) -> tuple[str, ...]:
                         ("tool tip width", r.tool.tip_width_mm)):
         if fact.needs_measurement:
             lines.append(f"Not measured: {label} ({fact.gap or 'gap not named'}).")
+    if rec.mode == "fill" and ("stepover_mm" in rec.overrides or rec.stepover_mm.needs_measurement):
+        lines.append("Not measured: fill stepover (G6)"
+                     + (": a bench override is in use (placeholder until V3 part C)." if "stepover_mm" in rec.overrides
+                        else "."))
     if not r.machine.max_job_bytes.known:
         lines.append(f"Job size limit not measured ({r.machine.max_job_bytes.gap or 'G9'}): H11 inactive.")
     if r.machine.work_field_mm.known and r.machine.work_field_mm.confidence != "CONFIRMED":

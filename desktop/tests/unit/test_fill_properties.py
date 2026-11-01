@@ -127,3 +127,11 @@ def test_vertex_order_invariance(reg: Region, p: FillParams, shift: int, flip: b
         outer = tuple(reversed(outer))
         holes = tuple(tuple(reversed(h)) for h in holes)
     assert fill(FillOp((Region(outer, holes),)), 0, p) == fill(FillOp((reg,)), 0, p)
+
+
+@settings(max_examples=150, deadline=None)
+@given(regions(), params)
+def test_every_region_is_cut_or_reported(reg: Region, p: FillParams) -> None:
+    """M2 review: no region is dropped silently. It gets a path, or it is in `narrow`."""
+    r = fill(FillOp((reg,)), 0, p)
+    assert r.paths or [n.region_index for n in r.narrow] == [0]

@@ -150,7 +150,10 @@ def _hatch(area: MultiPolygon, params: FillParams) -> list[Polyline]:
 def _narrow_width(poly: Polygon, components: list[Polygon], half: float) -> float | None:
     """Upper bound on the width of the unreached parts of `poly` (mm, rounded up to 0.01), or None."""
     if components:
-        reach = shapely.union_all(components).buffer(half, join_style="mitre", mitre_limit=MITRE_LIMIT)
+        # What a round tip sweeps when its centre covers `components`: a ROUND buffer, so material the tip
+        # cannot reach in acute corners counts as unreached (M2 review, finding 1). This only feeds the
+        # report (S3), never the bytes, so GEOS's trig for round joins cannot change the output.
+        reach = shapely.union_all(components).buffer(half)
         rest = _polygons(shapely.normalize(poly.difference(reach)))
         rest = [p for p in rest if p.area > NARROW_MIN_AREA_MM2]
         if not rest:
@@ -177,12 +180,20 @@ def fill(op: FillOp, op_index: int, params: FillParams) -> FillResult:
         except ValueError as e:
             raise ValueError(f"operations[{op_index}].regions[{ri}]: {e}") from e
         comps = offset_area(poly, half)
-        w = _narrow_width(poly, comps, half)
+        hatch = _hatch(MultiPolygon(comps), params) if comps else []
+        if params.contour_pass:
+            reached = comps
+        else:
+            # Without a contour pass only hatch lines cut: a component thinner than the stepover can fall
+            # between two lines and get nothing (M2 review, finding 2). Count only components a line enters.
+            lines = shapely.MultiLineString([list(h.points) for h in hatch]) if hatch else None
+            reached = [c for c in comps if lines is not None and c.buffer(1e-9).intersects(lines)]
+        w = _narrow_width(poly, reached, half)
         if w is not None:
             narrow.append(NarrowRegion(op_index, ri, w))
         if not comps:
             continue
         if params.contour_pass:
             paths.extend(_contours(comps))
-        paths.extend(_hatch(MultiPolygon(comps), params))
+        paths.extend(hatch)
     return FillResult(tuple(paths), tuple(narrow))
