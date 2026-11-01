@@ -1,6 +1,6 @@
 # GratisGraph Desktop build plan
 
-Status: draft, 2026-11-01. Owner: Chris Lee. No milestone started.
+Status: M0 in progress, 2026-11-01. Software exit items met; hardware stage V0 not yet run. Owner: Chris Lee.
 
 ## Bottom line
 
@@ -51,14 +51,17 @@ A closed gap is annotated in place with its evidence, never deleted.
 | G6 | Fill stepover vs tip width, and fill pattern (hatch angle, contour pass) | Fill appearance and run time | Stepover ladder test pattern, M2 | M2 |
 | G7 | Segment `accel` field (vendor label `DANG`) effect at corners | Corner quality in text | Corner test pattern at `accel` 551 vs alternatives; ⚠ only if corners show defects | M2 |
 | G8 | Where `MC 1` belongs in a builder-produced job (setup vs per stroke) | Spindle state during rapids and plunges | M0 hardware run of a builder-produced rotary job; compare to probe run 3 | M0 |
+|  | *Software half closed 2026-11-01: the builder emits run 3's layout (MC 1 in setup, MC 0 before home) and `tests/test_rotary_params.py` holds it byte-identical to the probe job. Hardware half open: stage V0.* | | | |
 | G9 | Largest job the machine accepts, and behaviour of very long jobs (the unexplained ~500 KB `PZ 100` capture) | Fill jobs may be large | Send fills of increasing size, record acceptance and `!ET` | M2 |
 | G10 | Physical stop behaviour: what the panel stop does mid-job, and what `/abort` (`!1B 0;`) does mid-job on the IQ | Operator safety procedure, app abort semantics | Bench test with tool reversed, record telemetry | M1 |
 | G11 | Repeatability: depth and position over consecutive parts | Batch quality | 10 consecutive tags, measure position and inspect depth | M2 |
 | G12 | Windows 10 LTSC: WinUSB driver install for the IQ, PySide6 and Python floor on 1809 | Second platform | VM and real station test | M5 |
 | G13 | Golden `.m20` outputs are git-ignored (`*.m20`), so 15 golden tests fail on a fresh clone and the Python/TypeScript byte-identity guard is not enforced | All builder changes in M0 are unguarded | Un-ignore `tests/golden/outputs/`, commit goldens, add CI | M0 |
+|  | *Closed 2026-11-01 (PR #3): goldens committed, manifest hashes unchanged; CI runs pytest on Linux and Windows and `npm test`, plus the TS fixture drift check (PR #4).* | | | |
 | G14 | Express behaviour after shared driver changes (Chris has only the IQ) | Upstream acceptance | Upstream maintainer runs the Express goldens and a hardware check | M0 |
 | G15 | Machine bed coordinate frame vs fixture frame on the IQ, including Y direction | Mirrored or offset parts | First M1 hardware test uses an asymmetric pattern (lesson 5) | M1 |
 | G16 | Exact Python and PySide6 versions that support both Kubuntu 24.04 and Windows 10 1809 | Stack pin | Check current Qt LTS and PySide6 wheel floors at M0 | M0 |
+|  | *Closed 2026-11-01: Python 3.12 to 3.14, PySide6 6.11 (decisions.md). [STRONG] from Qt docs and PyPI metadata; the Windows 10 1809 station test stays in G12.* | | | |
 
 ## 3. Scope
 
@@ -183,8 +186,8 @@ from the builder and is byte-verified against Gravostyle captures; the gate uses
 
 | Layer | Choice | Reason |
 |---|---|---|
-| Language | Python 3.12 (`>=3.12,<3.14`), verify at M0 (G16) | Blueprint default; the driver is Python. Upstream's tray build uses 3.14; the desktop app has its own environment |
-| GUI | PySide6 pinned to one Qt LTS minor | Blueprint default; QGraphicsView for the bed preview; native on KDE |
+| Language | Python `>=3.12,<3.15`, CI on 3.12 and 3.14 (G16 closed) | Blueprint default widened to 3.14, which upstream's tray build already uses |
+| GUI | PySide6 `>=6.11,<6.12` | Lists Windows 10 1809 (6.12 is the last series with Windows 10); QGraphicsView for the bed preview; native on KDE |
 | USB | pyusb + libusb (existing driver) | Already proven on Linux (udev, unprivileged) and Windows (WinUSB) |
 | Geometry | Shapely for fill offsets and hatch clipping (verify licence and wheel availability at M0) | Mature; avoids hand-written polygon offsetting |
 | Config | TOML (`tomllib`, `tomli-w`) | Blueprint default |
@@ -263,12 +266,12 @@ Exit criteria:
 
 | Exit item | State | Evidence |
 |---|---|---|
-| All existing goldens committed and byte-identical on Linux and Windows CI | open | |
-| Express default output unchanged (golden diff empty) | open | |
-| Builder-produced rotary job cuts like probe run 3 on the IQ (photo + capture) | open | |
-| `desktop/` CI green: lint, types, import probe | open | |
-| Upstream PRs opened (IQ fixes; builder parameters) | open | |
-| G8, G13, G16 closed | open | |
+| All existing goldens committed and byte-identical on Linux and Windows CI | met | PR #3, CI run on ubuntu and windows, Python 3.12 and 3.14 |
+| Express default output unchanged (golden diff empty) | met | PR #4: every pre-existing golden and TS fixture unchanged; new cases only |
+| Builder-produced rotary job cuts like probe run 3 on the IQ (photo + capture) | open (Chris) | Bytes identical in software (`tests/test_rotary_params.py`); hardware run: `validation/V0-builder-rotary.md` |
+| `desktop/` CI green: lint, types, import probe | met | desktop.yml (scaffold PR) |
+| Upstream PRs opened (IQ fixes; builder parameters) | open (Chris) | Branches are ready on the fork; opening PRs on the upstream repository is left to the owner |
+| G8, G13, G16 closed | G13, G16 met; G8 software met, hardware open | Gap register |
 
 ### M1 Bench app: job format, trace, gate, CLI, bench window
 

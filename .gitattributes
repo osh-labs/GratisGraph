@@ -6,3 +6,6 @@
 *.SPL binary
 *.bin binary
 *.gc text eol=lf
+
+# Append-only decision log: parallel branches merge without conflict
+desktop/docs/decisions.md merge=union

@@ -1,0 +1,79 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gratisgraph-desktop"
+version = "0.1.0"
+description = "Desktop app for Gravograph M20-family rotary engravers: job intake, toolpaths, output gate, queue, machine run"
+readme = "README.md"
+requires-python = ">=3.12,<3.15"
+license = "GPL-3.0-or-later"
+dependencies = [
+    # The GratisGraph driver: the flat modules at the repository root,
+    # installed with `pip install -e .` from the root (see README.md).
+    "gratisgraph",
+    "platformdirs>=4.2",
+    "tomli-w>=1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-xdist>=3.5",
+    "hypothesis>=6.100",
+    "ruff>=0.6",
+    "mypy>=1.10",
+]
+# Qt 6.11 lists Windows 10 1809. Qt 6.12 is the last series with Windows 10,
+# so do not move past 6.12 while Windows 10 LTSC is a target. See docs/decisions.md.
+gui = ["PySide6>=6.11,<6.12"]
+
+[project.scripts]
+ggdesk = "ggdesk.cli:main"
+
+[project.gui-scripts]
+ggdesk-gui = "ggdesk_app.app:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+ggdesk = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = [
+    "slow: long property runs",
+    "gui: PySide6 + pytest-qt, offscreen; skipped without PySide6",
+]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "TID"]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"math.hypot".msg = "use ggdesk.numerics (exact paths must not depend on libm)"
+"PySide6".msg = "the core is Qt-free; Qt belongs in src/ggdesk_app"
+
+[tool.ruff.lint.per-file-ignores]
+"src/ggdesk/numerics.py" = ["TID251"]
+"src/ggdesk_app/**" = ["TID251"]
+"tests/gui/**" = ["TID251"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src/ggdesk", "src/ggdesk_app"]
+mypy_path = "src"
+
+[[tool.mypy.overrides]]
+# The driver modules are untyped; the core wraps what it uses.
+module = ["gts_api", "gts_preview", "gts_prepare", "gts_optimise", "gts_translator"]
+ignore_missing_imports = true
+follow_imports = "skip"
