@@ -5,6 +5,7 @@ import argparse
 from pathlib import Path
 from typing import Any
 
+from ggdesk import paths
 from ggdesk.library import Library, Selection, load_library
 from ggdesk.model.geometry import Pt
 
@@ -54,4 +55,5 @@ def selection_from_args(args: argparse.Namespace) -> Selection:
 
 
 def library_from_args(args: argparse.Namespace) -> Library:
-    return load_library(None, None, *(Path(d) for d in getattr(args, "library_dirs", [])))
+    """Seed, then the user library, then --library directories: the same order `ggdesk send` uses."""
+    return load_library(None, paths.user_library(), *(Path(d) for d in getattr(args, "library_dirs", [])))

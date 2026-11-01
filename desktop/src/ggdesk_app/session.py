@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from ggdesk import paths
 from ggdesk.formats import job as job_format
 from ggdesk.gate import GateReport, acknowledged
 from ggdesk.library import Library, Selection, load_library
@@ -35,7 +36,7 @@ class SendNotAllowed(RuntimeError):
     """send() was called while can_send() is false. Nothing was sent."""
 
 
-def default_runner_factory() -> Any:
+def default_runner_factory(machine: Any = None) -> Any:
     """The real send path: ggdesk.run.Runner on a real connection (slice M1.3).
 
     Imported lazily and called only when the operator presses Send, so opening
@@ -46,16 +47,17 @@ def default_runner_factory() -> Any:
     conn = run.open_connection() if hasattr(run, "open_connection") else joblog.open_connection()
     if getattr(conn, "dev", None) is None:
         conn.connect(timeout_s=5.0)
-    return run.Runner(conn, joblog.JobLog())
+    return run.Runner(conn, joblog.JobLog(), machine=machine)
 
 
 class BenchSession:
     def __init__(self, library: Library | None = None,
                  runner_factory: Callable[[], Any] | None = None) -> None:
-        self.library = library if library is not None else load_library()
+        self.library = library if library is not None else load_library(None, paths.user_library())
         self.state = SessionState()
         self._listeners: list[Callable[[SessionState], None]] = []
-        self.runner_factory: Callable[[], Any] = runner_factory or default_runner_factory
+        self.runner_factory: Callable[[], Any] = runner_factory or (
+            lambda: default_runner_factory(self._machine_entry()))
         self.runner: Any | None = None      # ggdesk.run.Runner, created on the first send
         self.operator = ""                  # who pressed Send last (shown in the status line)
 
@@ -141,7 +143,11 @@ class BenchSession:
         self.operator = operator
         if self.runner is None:
             self.runner = self.runner_factory()
-        return self.runner.send_gated(data, report, typed_ack.strip())
+        return self.runner.send_gated(data, report, typed_ack.strip(), operator=operator or None)
+
+    def _machine_entry(self) -> Any:
+        """The selected machine's library entry; the Runner needs it for the home-job check."""
+        return self.library.machines.get(self.state.selection.machine)
 
     def abort(self) -> bool:
         """Abort the running job (`!1B 0;` via the runner). False when nothing was ever sent."""

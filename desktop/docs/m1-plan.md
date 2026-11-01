@@ -1,7 +1,7 @@
 # M1 plan: bench app (job format, trace, gate, CLI, bench window)
 
-Status: approved for build 2026-11-01 (owner questions answered by the coding agent under delegated
-authority; owner to confirm). Not started.
+Status: software complete 2026-11-01 (PRs #8 to #12 and the M1.Z integration PR); hardware stages V1 and
+V2 not yet run. Owner questions answered by the coding agent under delegated authority; owner to confirm.
 
 ## Bottom line
 

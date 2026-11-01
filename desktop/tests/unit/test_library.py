@@ -188,3 +188,13 @@ def test_rounded_outline_is_flattened_within_chord() -> None:
     for x, y in poly:
         if x > cx and y > cy:
             assert abs(numerics.length(x - cx, y - cy) - 3.0) < 1e-9
+
+
+def test_entry_hash_ignores_line_endings(tmp_path: Path) -> None:
+    src = SEED / "tools" / "rotary-diamond.toml"
+    crlf = tmp_path / "tools"
+    crlf.mkdir()
+    (crlf / "rotary-diamond.toml").write_bytes(src.read_bytes().replace(b"\n", b"\r\n"))
+    a, _ = load_entry(src, "tool")
+    b, _ = load_entry(crlf / "rotary-diamond.toml", "tool")
+    assert a.ref.sha256 == b.ref.sha256

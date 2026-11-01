@@ -27,15 +27,39 @@ class MainWindow(QMainWindow):
         extensions.install_all(self)
 
 
+def _core_check() -> list[str]:
+    """Build and gate a 10 mm square from the seed library, offline (no USB). Returns problems."""
+    from ggdesk import gate
+    from ggdesk.build import build, gate_inputs
+    from ggdesk.library import Selection, load_library
+    from ggdesk.model.geometry import Polyline
+    from ggdesk.model.job import Job, TraceOp
+
+    problems: list[str] = []
+    lib = load_library()
+    problems += [f"library: {e}" for e in lib.errors]
+    job = Job("bench-scrap-40", (TraceOp((Polyline(((-5.0, -5.0), (5.0, -5.0), (5.0, 5.0), (-5.0, 5.0)), True),)),))
+    sel = Selection(recipe="scrap-rotary-diamond-trace")
+    result = build(job, lib, sel)
+    rep = gate.run_gate(result.data, gate_inputs(result, sel))
+    if not rep.passed or len(gate.RULES) < 16:
+        problems.append("gate: the self-test square did not pass, or rules are missing")
+    return problems
+
+
 def self_test() -> int:
-    """Headless check for packaged builds: core imports, window constructs."""
+    """Headless check for packaged builds: library loads, build + gate run, window constructs. No USB."""
+    problems = _core_check()
     app = QApplication.instance() or QApplication([])
     w = MainWindow()
-    ok = w.windowTitle().startswith(TITLE)
+    if not w.windowTitle().startswith(TITLE):
+        problems.append("window title")
     w.close()
     del app
-    print("self-test", "ok" if ok else "FAILED")
-    return 0 if ok else 1
+    for p in problems:
+        print("self-test problem:", p)
+    print("self-test", "ok" if not problems else "FAILED")
+    return 0 if not problems else 1
 
 
 def main(argv: Sequence[str] | None = None) -> int:

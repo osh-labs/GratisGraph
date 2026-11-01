@@ -39,6 +39,31 @@ def add_arguments(p: argparse.ArgumentParser) -> None:
     p.add_argument("--library", dest="library_dirs", action="append", default=[], type=Path, metavar="DIR",
                    help="extra library directory, as given to ggdesk build (repeatable)")
     p.add_argument("--dry-run", action="store_true", help="every check except connecting and sending")
+    p.add_argument("--capture", type=Path, default=None, metavar="FILE.jsonl",
+                   help="write every decoded machine packet (telemetry such as !MZ, !CM, !ET) to this file, "
+                        "one JSON object per line with a timestamp (bench measurements, e.g. V2)")
+
+
+class Capture:
+    """Driver tap that appends every decoded packet to a JSON-lines file (reader thread)."""
+
+    def __init__(self, path: Path) -> None:
+        self.path = path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        self._fh = path.open("a", encoding="utf-8", newline="\n")
+
+    def __call__(self, item: object) -> None:
+        rec = {"t": runmod.utc_now_iso(), "item": item}
+        self._fh.write(json.dumps(rec, sort_keys=True, default=_jsonable) + "\n")
+        self._fh.flush()
+
+
+def _jsonable(v: object) -> object:
+    if isinstance(v, (bytes, bytearray)):
+        return v.hex()
+    if isinstance(v, tuple):
+        return list(v)
+    return str(v)
 
 
 def _refused(reason: str) -> int:
@@ -116,6 +141,8 @@ def run(args: argparse.Namespace) -> int:
         if not conn.connect():
             print("ggdesk send: machine not found (USB)", file=sys.stderr)
             return EXIT_ERROR
+        if args.capture is not None:
+            conn.add_tap(Capture(args.capture))
         runner = runmod.Runner(conn, log, machine=machine)
         try:
             result = runner.send_gated(data, report, args.ack, operator=args.operator)

@@ -58,7 +58,7 @@ class FakeRunner:
     threads: list[threading.Thread] = field(default_factory=list)
     aborted: int = 0
 
-    def send_gated(self, data: bytes, report: GateReport, ack: str = "") -> Any:
+    def send_gated(self, data: bytes, report: GateReport, ack: str = "", *, operator: str | None = None) -> Any:
         self.threads.append(threading.current_thread())
         self.sent.append((data, report, ack))
         if self.error is not None:
