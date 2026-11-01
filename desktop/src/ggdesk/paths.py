@@ -26,5 +26,10 @@ def user_library() -> Path:
     env = os.environ.get("GGDESK_USER_LIBRARY")
     if env:
         return Path(env)
+    return user_data_dir() / "library"
+
+
+def user_data_dir() -> Path:
+    """Per-OS user data directory of the app (holds the user library and the job log)."""
     name = "gratisgraph-desktop" if sys.platform.startswith("linux") else "GratisGraph Desktop"
-    return Path(platformdirs.user_data_dir(name, appauthor=False, roaming=True)) / "library"
+    return Path(platformdirs.user_data_dir(name, appauthor=False, roaming=True))

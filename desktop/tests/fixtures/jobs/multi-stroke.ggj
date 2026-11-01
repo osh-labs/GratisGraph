@@ -1,0 +1,152 @@
+{
+  "format": "gratisgraph-job",
+  "version": 1,
+  "units": "mm",
+  "part": "bench-scrap-40",
+  "quantity": 1,
+  "reference": "Multi-stroke golden: ladder (5 strokes), closed triangle, closed square, open zigzag with half-unit coordinates",
+  "source": {
+    "name": "hand-written test job",
+    "version": "1"
+  },
+  "chord_tolerance_mm": 0.01,
+  "operations": [
+    {
+      "op": "trace",
+      "mode_hint": "trace",
+      "char_height_mm": 10.0,
+      "paths": [
+        {
+          "points": [
+            [
+              -15.0,
+              -15.0
+            ],
+            [
+              -15.0,
+              -5.0
+            ]
+          ],
+          "closed": false
+        },
+        {
+          "points": [
+            [
+              -9.0,
+              -15.0
+            ],
+            [
+              -9.0,
+              -5.0
+            ]
+          ],
+          "closed": false
+        },
+        {
+          "points": [
+            [
+              -15.0,
+              -13.0
+            ],
+            [
+              -9.0,
+              -13.0
+            ]
+          ],
+          "closed": false
+        },
+        {
+          "points": [
+            [
+              -15.0,
+              -10.0
+            ],
+            [
+              -9.0,
+              -10.0
+            ]
+          ],
+          "closed": false
+        },
+        {
+          "points": [
+            [
+              -15.0,
+              -7.0
+            ],
+            [
+              -9.0,
+              -7.0
+            ]
+          ],
+          "closed": false
+        }
+      ]
+    },
+    {
+      "op": "trace",
+      "mode_hint": "trace",
+      "paths": [
+        {
+          "points": [
+            [
+              2.0,
+              2.0
+            ],
+            [
+              12.0,
+              2.0
+            ],
+            [
+              7.0,
+              12.0
+            ]
+          ],
+          "closed": true
+        },
+        {
+          "points": [
+            [
+              -12.0,
+              4.0
+            ],
+            [
+              -4.0,
+              4.0
+            ],
+            [
+              -4.0,
+              12.0
+            ],
+            [
+              -12.0,
+              12.0
+            ]
+          ],
+          "closed": true
+        },
+        {
+          "points": [
+            [
+              2.125,
+              -4.125
+            ],
+            [
+              6.135,
+              -4.125
+            ],
+            [
+              10.0,
+              -8.0
+            ],
+            [
+              14.875,
+              -14.875
+            ]
+          ],
+          "closed": false
+        }
+      ]
+    }
+  ]
+}
