@@ -9,6 +9,7 @@ import importlib
 from typing import Any
 
 INSTALLERS: tuple[str, ...] = (
+    "ggdesk_app.bench:install",
 )
 
 
