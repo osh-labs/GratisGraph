@@ -333,7 +333,7 @@ def fake_build(monkeypatch: pytest.MonkeyPatch) -> Iterator[FakeBuild]:
 def test_worker_builds_and_gates_after_opening(qtbot: Any, lib: Library, fake_build: FakeBuild) -> None:
     s = BenchSession(lib, runner_factory=Factory(FakeRunner()))
     b = _bench(qtbot, s)
-    b.job_panel.recipe.setCurrentText(RECIPE)
+    assert b.job_panel.recipe.select_recipe(RECIPE)
     b.job_panel.open_job(SQUARE)
     qtbot.waitUntil(lambda: s.state.report is not None, timeout=3000)
     assert s.state.data == job_bytes() and s.state.report is not None and s.state.report.bound_to(s.state.data)
