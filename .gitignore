@@ -74,3 +74,8 @@ GS7/
 
 # Hardware probe reports (gts_probe.py)
 data/probes/
+
+# GratisGraph Desktop
+desktop/build/
+desktop/dist/
+desktop/work/
