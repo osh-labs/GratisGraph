@@ -1,6 +1,6 @@
 """ggdesk command line. Every core operation is reachable from here.
 
-  ggdesk check | build | preview | send | pattern | library validate | inspect | version
+  ggdesk check | build | preview | send | pattern | library validate | drawing nest | inspect | version
 
 This module only parses arguments and dispatches to ggdesk.commands.<name>.run.
 Each slice owns its command module (desktop/docs/m1-plan.md section 2.8).
@@ -25,6 +25,7 @@ COMMANDS = {
     "send": "send gated bytes to the machine (refuses without a bound, passing report)",
     "pattern": "generate a bench test pattern job",
     "library": "library tools (validate)",
+    "drawing": "shop drawings (nest plate SVG and DXF R12)",
 }
 
 
