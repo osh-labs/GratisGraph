@@ -42,6 +42,8 @@ data/*.dxf
 
 # Generated output files
 *.m20
+# ...but the golden corpus outputs are the drift guard and must be committed
+!tests/golden/outputs/*.m20
 *.svg
 # ...but the committed web-app favicon must survive the blanket *.svg rule above
 !web/app/favicon.svg
