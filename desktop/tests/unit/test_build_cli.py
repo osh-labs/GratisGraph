@@ -37,13 +37,13 @@ def test_build_writes_bytes_and_reports(tmp_path: Path, capsys: pytest.CaptureFi
 
 
 def test_selection_flags(tmp_path: Path) -> None:
-    rc, out = _build(tmp_path, "--set", "pz=80", "--keep-out", "0,0,10,10", "--library", FIXLIB,
+    rc, out = _build(tmp_path, "--set", "pz=80", "--keep-out", "80,0,90,10", "--library", FIXLIB,
                      job=EX / "square-10mm.ggj")
     assert rc == 0
     assert out.read_bytes() == (DESKTOP / "tests" / "golden" / "outputs" / "square_10mm_pz80.m20").read_bytes()
     rep = GateReport.from_json((tmp_path / "out.gate.json").read_text(encoding="utf-8"))
     assert rep.selection.overrides == {"pz": 80}
-    assert rep.selection.extra_keep_outs == (((0.0, 0.0), (10.0, 0.0), (10.0, 10.0), (0.0, 10.0)),)
+    assert rep.selection.extra_keep_outs == (((80.0, 0.0), (90.0, 0.0), (90.0, 10.0), (80.0, 10.0)),)
 
 
 def test_refused_exits_3(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
