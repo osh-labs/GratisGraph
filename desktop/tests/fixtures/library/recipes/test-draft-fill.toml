@@ -1,0 +1,87 @@
+schema_version = 1
+kind = "recipe"
+id = "test-draft-fill"
+version = 1
+name = "TEST ONLY: draft fill recipe (bench overrides allowed), 0.2 mm tip, stepover 0.2 mm, hatch 0 deg, contour on"
+machine = "m20-iq"
+tool = "test-tool-02"
+material = "scrap-aluminum"
+mode = "fill"
+status = "draft"
+
+[sources.test]
+title = "Test fixture (invented values)"
+path = "desktop/tests/fixtures/library/README.md"
+kind = "project_decision"
+
+[setup.mc]
+value = 1
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[setup.vs]
+value = 10
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[setup.vz]
+value = 5
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[setup.pz]
+value = 50
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[setup.dz]
+value = 500
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[manual.nose_fitted]
+value = true
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[manual.knob_notches]
+value = 5
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[manual.pressure]
+value = 2
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[min_char_height_mm]
+value = 2.0
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[fill.stepover_mm]
+value = 0.2
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[fill.hatch_angle_deg]
+value = 0.0
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[fill.contour_pass]
+value = true
+src = "test"
+ref = "test"
+confidence = "DEFINED"

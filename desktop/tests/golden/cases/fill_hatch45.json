@@ -1,0 +1,15 @@
+{
+  "job": "tests/fixtures/jobs/fill-l-triangle.ggj",
+  "note": "Fill (M2.1): concave L with a triangular hole and a triangle, hatch 45 deg and stepover 0.3 mm by bench override (exact cos/sin)",
+  "selection": {
+    "extra_keep_outs": [],
+    "fixture": "bare-bed",
+    "machine": "m20-iq",
+    "nest": "centre",
+    "overrides": {
+      "hatch_angle_deg": 45.0,
+      "stepover_mm": 0.3
+    },
+    "recipe": "test-draft-fill"
+  }
+}

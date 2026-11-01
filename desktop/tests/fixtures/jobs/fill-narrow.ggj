@@ -1,0 +1,95 @@
+{
+  "format": "gratisgraph-job",
+  "version": 1,
+  "units": "mm",
+  "part": "bench-scrap-40",
+  "quantity": 1,
+  "reference": "Fill golden: a dumbbell with a neck narrower than the tip and a bar that vanishes (S3 narrow regions)",
+  "source": {
+    "name": "hand-written test job",
+    "version": "1"
+  },
+  "chord_tolerance_mm": 0.01,
+  "operations": [
+    {
+      "op": "fill",
+      "mode_hint": "fill",
+      "regions": [
+        {
+          "outer": [
+            [
+              -8.0,
+              -2.0
+            ],
+            [
+              -4.0,
+              -2.0
+            ],
+            [
+              -4.0,
+              -0.05
+            ],
+            [
+              4.0,
+              -0.05
+            ],
+            [
+              4.0,
+              -2.0
+            ],
+            [
+              8.0,
+              -2.0
+            ],
+            [
+              8.0,
+              2.0
+            ],
+            [
+              4.0,
+              2.0
+            ],
+            [
+              4.0,
+              0.05
+            ],
+            [
+              -4.0,
+              0.05
+            ],
+            [
+              -4.0,
+              2.0
+            ],
+            [
+              -8.0,
+              2.0
+            ]
+          ],
+          "holes": []
+        },
+        {
+          "outer": [
+            [
+              -6.0,
+              6.0
+            ],
+            [
+              6.0,
+              6.0
+            ],
+            [
+              6.0,
+              6.15
+            ],
+            [
+              -6.0,
+              6.15
+            ]
+          ],
+          "holes": []
+        }
+      ]
+    }
+  ]
+}

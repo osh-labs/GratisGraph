@@ -64,7 +64,7 @@ def test_refused_exits_3(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Non
 def test_build_error_exits_1(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     rc, out = _build(tmp_path, job=EX / "fill-square-hole.ggj")
     assert rc == 1
-    assert "fill operations are not implemented" in capsys.readouterr().err
+    assert "a fill operation needs a fill recipe" in capsys.readouterr().err
     assert not out.exists()
 
 

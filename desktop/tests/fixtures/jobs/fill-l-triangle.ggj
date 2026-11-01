@@ -1,0 +1,82 @@
+{
+  "format": "gratisgraph-job",
+  "version": 1,
+  "units": "mm",
+  "part": "bench-scrap-40",
+  "quantity": 1,
+  "reference": "Fill golden: concave L with a triangular hole and a separate triangle (hatch 45 deg by override)",
+  "source": {
+    "name": "hand-written test job",
+    "version": "1"
+  },
+  "chord_tolerance_mm": 0.01,
+  "operations": [
+    {
+      "op": "fill",
+      "mode_hint": "fill",
+      "regions": [
+        {
+          "outer": [
+            [
+              -12.0,
+              -12.0
+            ],
+            [
+              2.0,
+              -12.0
+            ],
+            [
+              2.0,
+              -4.0
+            ],
+            [
+              -4.0,
+              -4.0
+            ],
+            [
+              -4.0,
+              6.0
+            ],
+            [
+              -12.0,
+              6.0
+            ]
+          ],
+          "holes": [
+            [
+              [
+                -10.0,
+                -10.0
+              ],
+              [
+                -6.0,
+                -6.0
+              ],
+              [
+                -6.0,
+                -10.0
+              ]
+            ]
+          ]
+        },
+        {
+          "outer": [
+            [
+              5.0,
+              3.0
+            ],
+            [
+              13.0,
+              3.0
+            ],
+            [
+              9.0,
+              11.0
+            ]
+          ],
+          "holes": []
+        }
+      ]
+    }
+  ]
+}

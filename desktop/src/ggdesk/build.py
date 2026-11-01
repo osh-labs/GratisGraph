@@ -1,7 +1,8 @@
 """Job + library + selection -> final .m20 bytes (desktop/docs/m1-plan.md section 2.5).
 
-The build refuses what it cannot build (unplaced part, fill operations, a
-recipe/mode mismatch, an unknown setup value, nothing to cut). It does not
+The build refuses what it cannot build (unplaced part, a recipe/mode mismatch,
+a fill without a fill recipe, tip width or stepover, an unknown setup value,
+nothing to cut). It does not
 judge geometry against the part, the keep-outs or the work field: that is the
 output gate's job, on the final bytes, and a check here would hide a gate
 finding.
@@ -20,9 +21,11 @@ from ggdesk.gate.types import GateConfig, GateInputs
 from ggdesk.library.load import Library
 from ggdesk.library.model import OverrideError, UnmeasuredError
 from ggdesk.library.select import Resolved, Selection, SelectionError, resolve
+from ggdesk.model.geometry import Polyline
 from ggdesk.model.job import FillOp, Job, TraceOp
-from ggdesk.model.toolpath import Intent, UStroke
+from ggdesk.model.toolpath import Intent, NarrowRegion, UStroke
 from ggdesk.toolpath import order, to_machine_units_counted, trace
+from ggdesk.toolpath.fill import FillParams, fill
 
 MODEL_CODE_OFFSET = 0x24   # header uint16 BE: the driver stamps the connected machine's code here
 
@@ -79,12 +82,14 @@ def build(job: Job, lib: Library, sel: Selection, *, job_text: str | None = None
         raise BuildError(f"cannot place the part on fixture {res.fixture.ref.id} nest {sel.nest}: {gap}")
 
     for i, op in enumerate(job.operations):
-        if isinstance(op, FillOp):
-            raise BuildError(f"operations[{i}]: fill operations are not implemented in this build (M2)")
+        if isinstance(op, FillOp) and recipe.mode != "fill":
+            raise BuildError(f"operations[{i}]: a fill operation needs a fill recipe; recipe "
+                             f"{recipe.ref.id} mode is {recipe.mode!r}")
     for i, op in enumerate(job.operations):
         if op.mode_hint != recipe.mode:
             raise BuildError(f"operations[{i}]: mode_hint {op.mode_hint!r} does not match recipe "
                              f"{recipe.ref.id} mode {recipe.mode!r}")
+    fill_params = _fill_params(res) if any(isinstance(op, FillOp) for op in job.operations) else None
 
     try:
         setup = recipe.setup_values()
@@ -98,9 +103,20 @@ def build(job: Job, lib: Library, sel: Selection, *, job_text: str | None = None
     strokes: list[UStroke] = []
     dropped = 0
     heights: list[float] = []
-    for op in job.operations:
-        assert isinstance(op, TraceOp)   # FillOp refused above
-        s, d = to_machine_units_counted(trace(op), res.placement)
+    narrow: list[NarrowRegion] = []
+    for i, op in enumerate(job.operations):
+        if isinstance(op, FillOp):
+            assert fill_params is not None
+            try:
+                fr = fill(op, i, fill_params)
+            except ValueError as e:
+                raise BuildError(f"fill: {e}") from e
+            narrow.extend(fr.narrow)
+            # closed contour paths get their closing point exactly as trace() gives a closed path
+            paths: tuple[Polyline, ...] = trace(TraceOp(fr.paths))
+        else:
+            paths = trace(op)
+        s, d = to_machine_units_counted(paths, res.placement)
         strokes.extend(s)
         dropped += d
         if op.char_height_mm is not None:
@@ -109,7 +125,7 @@ def build(job: Job, lib: Library, sel: Selection, *, job_text: str | None = None
         raise BuildError(f"the job has no strokes to cut after quantisation to 0.01 mm "
                          f"({dropped} path(s) collapsed to a single point)")
 
-    intent = Intent(tuple(strokes), tuple(heights))
+    intent = Intent(tuple(strokes), tuple(heights), tuple(narrow))
     ordered = tuple(order(strokes))
     drv = [s.to_driver() for s in ordered]
     vs = setup["vs"]
@@ -126,6 +142,24 @@ def build(job: Job, lib: Library, sel: Selection, *, job_text: str | None = None
         raise BuildError("run-time estimate unavailable (the driver's velocity constant is unset)")
     return BuildResult(data=data, intent=intent, ordered=ordered, resolved=res,
                        job_sha256=job_sha256(job, job_text), estimate_s=float(est), dropped_points=dropped)
+
+
+def _fill_params(res: Resolved) -> FillParams:
+    """Fill parameters from the effective recipe and the resolved tip width; BuildError names a gap."""
+    recipe = res.recipe
+    if res.tip_width_mm is None:
+        f = res.tool.tip_width_mm
+        gap = f" ({f.gap})" if f.gap else ""
+        raise BuildError(f"fill needs the tip width: tool {res.tool.ref.id} tip_width_mm is "
+                         f"needs_measurement{gap}; measure it or set a bench override tip_width_mm")
+    try:
+        stepover = float(recipe.stepover_mm.require(f"recipe {recipe.ref.id} stepover_mm"))
+        angle = float(recipe.hatch_angle_deg.require(f"recipe {recipe.ref.id} hatch_angle_deg"))
+        contour = bool(recipe.contour_pass.require(f"recipe {recipe.ref.id} contour_pass"))
+    except UnmeasuredError as e:
+        raise BuildError(f"fill parameter unknown: {e}") from e
+    return FillParams(tip_width_mm=float(res.tip_width_mm), stepover_mm=stepover, hatch_angle_deg=angle,
+                      contour_pass=contour)
 
 
 def gate_inputs(result: BuildResult, sel: Selection, config: GateConfig | None = None) -> GateInputs:

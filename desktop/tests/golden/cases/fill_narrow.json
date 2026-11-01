@@ -1,0 +1,12 @@
+{
+  "job": "tests/fixtures/jobs/fill-narrow.ggj",
+  "note": "Fill (M2.1): a neck narrower than the tip and a bar that vanishes, both reported as narrow regions (S3)",
+  "selection": {
+    "extra_keep_outs": [],
+    "fixture": "bare-bed",
+    "machine": "m20-iq",
+    "nest": "centre",
+    "overrides": {},
+    "recipe": "test-confirmed-fill"
+  }
+}
