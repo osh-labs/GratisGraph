@@ -15,6 +15,9 @@ dependencies = [
     "gratisgraph",
     "platformdirs>=4.2",
     "tomli-w>=1.0",
+    # M2 fill geometry and bench text (licences BSD-3 / MIT; wheels checked, decisions.md)
+    "shapely>=2.1,<2.3",
+    "fonttools>=4.50",
 ]
 
 [project.optional-dependencies]
@@ -75,6 +78,7 @@ mypy_path = "src"
 
 [[tool.mypy.overrides]]
 # The driver modules are untyped; the core wraps what it uses.
-module = ["gts_api", "gts_preview", "gts_prepare", "gts_optimise", "gts_translator"]
+module = ["gts_api", "gts_preview", "gts_prepare", "gts_optimise", "gts_translator", "shapely", "shapely.*",
+          "fontTools", "fontTools.*"]
 ignore_missing_imports = true
 follow_imports = "skip"
