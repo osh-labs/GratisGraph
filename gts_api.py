@@ -62,10 +62,15 @@ METADATA       = 'ot : 1\x00'.encode('utf-16-le')
 BOX_DIM        = 0x0DE4     # 3556 units = 35.56 mm — character cell height
 
 DEFAULT_SPEED  = 25         # VS/VZ: vector speed
-DEFAULT_PZ     = 30         # PZ: plunge Z (confirmed from 00013.m20 and 00018.m20)
-DEFAULT_DZ     = 500        # DZ: drag/engrave depth (confirmed from 00013.SPL / 00018.SPL captures)
-DEFAULT_LIFT   = 30         # alias for PZ, kept for callers using DEFAULT_LIFT
-DEFAULT_DEPTH  = 500        # alias for DZ (= DEFAULT_DZ), confirmed from 00013.SPL / 00018.SPL
+DEFAULT_PZ     = 30         # PZ: engraving depth; on the M20 IQ with the regulating nose, Z
+                            # overtravel past the auto-ZRef touch (GTS_FORMAT §5.3). Value
+                            # confirmed from 00013.m20 and 00018.m20
+DEFAULT_DZ     = 500        # DZ: Z clearance (vendor "dégagement", GTS_FORMAT §5.3). Value
+                            # confirmed from 00013.SPL / 00018.SPL captures
+DEFAULT_LIFT   = 30         # legacy alias for DEFAULT_PZ (the old name "lift" was wrong)
+DEFAULT_DEPTH  = 500        # legacy alias for DEFAULT_DZ (the old name "depth" was wrong)
+MC_OFF         = 0          # MC 0: spindle off (diamond drag)
+MC_ON          = 1          # MC 1: spindle on; M20 IQ turns it only while the tool is down
 DEFAULT_ACCEL  = 551        # 0x0227 — constant in all observed segment records
 PEN_W_RAMP     = 1          # pen_w at stroke start (ramps up)
 DEFAULT_ZA     = 1          # ZA: Z approach depth (confirmed from 00013.SPL / 00018.SPL)
@@ -326,18 +331,42 @@ def _gts_header() -> bytes:
     return bytes(hdr)
 
 
+def _check_arg(name: str, value: int) -> int:
+    """Opcode arguments are uint16 on the wire; refuse anything that would wrap."""
+    if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= 0xFFFF:
+        raise ValueError(f'{name} must be an int in 0..65535, got {value!r}')
+    return value
+
+
 def _gts_setup(speed: int = DEFAULT_SPEED,
                pz:    int = DEFAULT_PZ,
-               dz:    int = DEFAULT_DZ) -> bytes:
-    """Build the setup command block. Values confirmed from 00013.m20."""
-    return (
+               dz:    int = DEFAULT_DZ,
+               mc:    int = MC_OFF,
+               vz:    Optional[int] = None,
+               vd:    Optional[int] = None) -> bytes:
+    """
+    Build the setup command block. Defaults reproduce 00013.m20 exactly:
+    DR 0, MC 0, VS, VZ (= VS), PZ, DZ.
+
+    mc -- 1 starts the spindle (rotary tools). M20 IQ: it turns only while
+          the tool is down (GTS_FORMAT §5.3, confirmed 2026-10-29).
+    vz -- Z speed; defaults to the XY speed, as in every capture.
+    vd -- plunge speed; appended after DZ when given (the position tested on
+          the M20 IQ, 2026-10-29). Omitted by default.
+    """
+    if isinstance(mc, bool) or mc not in (MC_OFF, MC_ON):
+        raise ValueError(f'mc must be 0 or 1, got {mc!r}')
+    out = (
         _cmd(b'DR', 0)    +
-        _cmd(b'MC', 0)    +  # MC: spindle (0=off/diamond drag, 1=rotary on)
-        _cmd(b'VS', speed) +
-        _cmd(b'VZ', speed) +   # VZ = VS (same value, confirmed)
-        _cmd(b'PZ', pz)   +
-        _cmd(b'DZ', dz)
+        _cmd(b'MC', mc)   +  # MC: spindle (0=off/diamond drag, 1=rotary on)
+        _cmd(b'VS', _check_arg('speed', speed)) +
+        _cmd(b'VZ', _check_arg('vz', speed if vz is None else vz)) +
+        _cmd(b'PZ', _check_arg('pz', pz))   +
+        _cmd(b'DZ', _check_arg('dz', dz))
     )
+    if vd is not None:
+        out += _cmd(b'VD', _check_arg('vd', vd))
+    return out
 
 
 def _gts_stroke_body(start_x:  int,
@@ -474,9 +503,19 @@ def build_circle(centre_x_mm: float = 50.0,
 def build_gts(strokes: list,
               speed:   int = DEFAULT_SPEED,
               pz:      int = DEFAULT_PZ,
-              dz:      int = DEFAULT_DZ) -> bytes:
+              dz:      int = DEFAULT_DZ,
+              *,
+              mc:      int = MC_OFF,
+              vz:      Optional[int] = None,
+              vd:      Optional[int] = None) -> bytes:
     """
     Assemble a multi-stroke GTS job.
+
+    Setup parameters (see _gts_setup): speed (VS, also the segment speed),
+    pz, dz, and for rotary tools mc=1, vz, vd. With mc=1 the job also sends
+    MC 0 before the return to home, as in the rotary diamond cut that ran
+    clean on the M20 IQ (PROTOCOL_FINDINGS.md, 2026-10-29). The defaults give
+    the same bytes as before these parameters existed.
 
     strokes — list of (start_x, start_y, [(dx, dy), ...]) tuples
               all coordinates in machine units (not mm), starts ABSOLUTE
@@ -511,11 +550,16 @@ def build_gts(strokes: list,
         cur_x = start_x + sum(dx for dx, _ in moves)
         cur_y = start_y + sum(dy for _, dy in moves)
 
+    # Spindle off before the return to home (rotary jobs only)
+    if mc == MC_ON:
+        all_body += _cmd(b'MC', MC_OFF)
+
     # Return to home (delta) + single job finish
     all_body += _seg(-cur_x, -cur_y, speed=speed)
     all_body += _cmd(b'JF', 0)
 
-    return _gts_header() + _gts_setup(speed=speed, pz=pz, dz=dz) + all_body
+    setup = _gts_setup(speed=speed, pz=pz, dz=dz, mc=mc, vz=vz, vd=vd)
+    return _gts_header() + setup + all_body
 
 
 def build_home_gts() -> bytes:

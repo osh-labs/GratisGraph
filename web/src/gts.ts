@@ -65,19 +65,42 @@ function header(out: number[]): void {
   for (const b of hdr) out.push(b);
 }
 
-function setup(out: number[], speed: number, pz: number, dz: number): void {
+/** Opcode arguments are uint16 on the wire; refuse anything that would wrap. */
+function checkArg(name: string, v: number): number {
+  if (!Number.isInteger(v) || v < 0 || v > 0xffff) {
+    throw new Error(`buildGts: ${name} must be an integer in 0..65535, got ${v}`);
+  }
+  return v;
+}
+
+/**
+ * Setup block. Defaults reproduce 00013.m20: DR 0, MC 0, VS, VZ (= VS), PZ, DZ.
+ * Rotary jobs: mc = 1, optional vz, optional vd (appended after DZ).
+ * Mirrors gts_api._gts_setup.
+ */
+function setup(out: number[], speed: number, pz: number, dz: number,
+               mc: number, vz: number, vd: number | undefined): void {
   cmd(out, 'DR', 0);
-  cmd(out, 'MC', 0);
-  cmd(out, 'VS', speed);
-  cmd(out, 'VZ', speed);
-  cmd(out, 'PZ', pz);
-  cmd(out, 'DZ', dz);
+  cmd(out, 'MC', mc);
+  cmd(out, 'VS', checkArg('speed', speed));
+  cmd(out, 'VZ', checkArg('vz', vz));
+  cmd(out, 'PZ', checkArg('pz', pz));
+  cmd(out, 'DZ', checkArg('dz', dz));
+  if (vd !== undefined) cmd(out, 'VD', checkArg('vd', vd));
 }
 
 export interface BuildOptions {
   speed?: number;
+  /** PZ: engraving depth value (M20 IQ with nose: Z overtravel past touch-off). */
   pz?: number;
+  /** DZ: Z clearance. */
   dz?: number;
+  /** MC: 1 runs the spindle (rotary tools); MC 0 is sent before the return home. */
+  mc?: 0 | 1;
+  /** VZ: Z speed; defaults to speed. */
+  vz?: number;
+  /** VD: plunge speed; not sent unless given. */
+  vd?: number;
 }
 
 /**
@@ -92,10 +115,13 @@ export function buildGts(strokes: Stroke[], opts: BuildOptions = {}): Uint8Array
   const speed = opts.speed ?? DEFAULT_SPEED;
   const pz = opts.pz ?? DEFAULT_PZ;
   const dz = opts.dz ?? DEFAULT_DZ;
+  const mc = opts.mc ?? 0;
+  if (mc !== 0 && mc !== 1) throw new Error(`buildGts: mc must be 0 or 1, got ${mc}`);
+  const vz = opts.vz ?? speed;
 
   const out: number[] = [];
   header(out);
-  setup(out, speed, pz, dz);
+  setup(out, speed, pz, dz, mc, vz, opts.vd);
 
   let curX = 0, curY = 0;
   for (const stroke of strokes) {
@@ -109,6 +135,7 @@ export function buildGts(strokes: Stroke[], opts: BuildOptions = {}): Uint8Array
     curY = sy + stroke.deltas.reduce((a, [, dy]) => a + dy, 0);
   }
 
+  if (mc === 1) cmd(out, 'MC', 0);  // spindle off before the return home
   seg(out, -curX, -curY, speed);   // return to home (delta)
   cmd(out, 'JF', 0);
 

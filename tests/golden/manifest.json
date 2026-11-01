@@ -69,6 +69,19 @@
       "output": "outputs/relative_mode.m20",
       "sha256": "760af956582e8441f2c5cfe7b8bec51f55f9d8427b79727d93be2160c66c83b3"
     },
+    "rotary_square_20mm": {
+      "bytes": 250,
+      "input": "inputs/square_20mm.gc",
+      "kwargs": {
+        "mc": 1,
+        "pz": 50,
+        "speed": 10,
+        "vd": 15,
+        "vz": 5
+      },
+      "output": "outputs/rotary_square_20mm.m20",
+      "sha256": "8972d2dd0a336b250679299e62cea4dae40346ad68922a4d5ca0d5bd58f78adb"
+    },
     "scaled_2x": {
       "bytes": 202,
       "input": "inputs/line_single.gc",
