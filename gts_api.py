@@ -278,6 +278,25 @@ PROFILE_FOR_MODEL_CODE: dict = {
 }
 
 
+def decode_ack_payload(payload: bytes):
+    """
+    Decode the payload of a counted "!XX N;" reply. Returns (value, values, label):
+
+      value   uint32 for 4-byte payloads (e.g. !CM 4;, !ET 4;), else None.
+      values  tuple of signed int32 BE when N is a non-zero multiple of 4,
+              e.g. !DL 8; (2170, 0), !PS 16; (X, Y, -1, -1). Else None.
+      label   ASCII text for a printable NUL-terminated payload, e.g.
+              !LB 3; b'HI\\0' -> 'HI' (M20 IQ, 2026-10-29). Else None.
+    """
+    n = len(payload)
+    value  = struct.unpack('>I', payload)[0] if n == 4 else None
+    values = struct.unpack(f'>{n // 4}i', payload) if n and n % 4 == 0 else None
+    label  = None
+    if n and payload[-1] == 0 and all(0x20 <= b < 0x7F for b in payload[:-1]):
+        label = payload[:-1].decode('ascii')
+    return value, values, label
+
+
 def _cmd(opcode: bytes, arg: int) -> bytes:
     """Encode a 6-byte FF FD opcode command."""
     return b'\xFF\xFD' + opcode + struct.pack('>H', arg & 0xFFFF)
@@ -1182,6 +1201,21 @@ class GTSConnection:
         return 'M20'
 
 
+    def _stamp_model_code(self, gts: bytes) -> bytes:
+        """
+        Write the identified machine's model_code into header 0x24.
+
+        Builders emit 0x0204 (M20 Express). An M20 IQ (0x020D, prog 1.81)
+        acks such a job with !JF but silently discards it — no beep, green
+        does nothing; stamped with its own code it queues normally (live
+        2026-10-28). No-op before identify() or on a non-GTS payload.
+        """
+        if not self.model_code or not gts.startswith(MAGIC) or len(gts) < 0x26:
+            return gts
+        b = bytearray(gts)
+        struct.pack_into('>H', b, 0x24, self.model_code)
+        return bytes(b)
+
     def send_gts(self, gts: bytes, home_first: bool = True):
         """
         Send a pre-built GTS binary to the machine.
@@ -1196,9 +1230,10 @@ class GTSConnection:
         home_first=False / --no-home.
         """
         if home_first:
-            home = build_home_gts()
+            home = self._stamp_model_code(build_home_gts())
             self._log(f'Queuing home GTS ({len(home)} bytes)...')
             self.send_raw(home)
+        gts = self._stamp_model_code(gts)
         self._log(f'Sending {len(gts)} bytes...')
         self.send_raw(gts)
         self._log('Jobs queued. ONE green press runs the full sequence.')
@@ -1385,14 +1420,17 @@ class GTSConnection:
                         self._dispatch_status_packet(packet)
                     else:
                         cmd_str = packet[:semi+1].decode('ascii', errors='replace')
-                        value   = (struct.unpack_from('>I', packet, semi+1)[0]
-                                   if count == 4 else None)
+                        payload = packet[semi+1:]
+                        value, values, label = decode_ack_payload(payload)
                         msg = (f'{cmd_str}  value=0x{value:08X}' if value is not None
-                               else f'{cmd_str}  payload={packet[semi+1:].hex(" ")}'
+                               else f'{cmd_str}  values={values}' if values
+                               else f'{cmd_str}  label={label!r}' if label is not None
+                               else f'{cmd_str}  payload={payload.hex(" ")}'
                                if count else cmd_str)
                         self._emit({'type': 'ack', 'cmd': cmd_str,
-                                    'value': value, 'text': msg,
-                                    'raw': packet})
+                                    'value': value, 'values': values,
+                                    'label': label, 'payload': payload,
+                                    'text': msg, 'raw': packet})
                         self._log(f'RX: {msg}')
                     continue
 
@@ -1538,17 +1576,26 @@ class GTSConnection:
         """
         Monitor machine responses until the job is complete.
 
-        Uses binary motor status protocol (confirmed live):
-          Running:  !MX/MY/MZ packets with value > 0
-          Complete: all active axes report 0, then !MN heartbeat
-        Fallback: 5s silence after last non-heartbeat packet.
+        M20 IQ (confirmed 2026-10-29): green gives !CM 4; = 1, the run ends
+        with one !ET 4; for the whole queue. !CM = 3 is a pause at NR (green
+        resumes), -1 is panel/jog mode. Once any !CM is seen the axis
+        heuristic below is ignored: the IQ's !MX/MY/MZ are idle position
+        reports that settle at non-zero values and misread as motion.
+
+        Other machines (M20 Express, confirmed 2026-06-09):
+          Running:  !MX/MY/MZ values changing
+          Complete: all moving axes report 0, then !MN heartbeat
+        Fallback: 5s silence after last axis motion.
         """
         deadline         = time.monotonic() + timeout_s
         last_motion_time = time.monotonic()
         silence_timeout  = 5.0
         axes_seen_moving: set = set()
         axes_at_home:     set = set()
+        last_axis_value:  dict = {}
         jf_acks          = 0
+        cm_state         = None    # last !CM 4; value (IQ only), signed
+        job_started      = False
 
         self._log('Monitoring job — watching for axis motion...')
 
@@ -1571,7 +1618,29 @@ class GTSConnection:
                     self._log(f'Machine acknowledged job receipt '
                               f'(!JF #{jf_acks}). Waiting for execution...')
                     continue
+                if item['type'] == 'ack' and item.get('cmd', '').startswith('!CM'):
+                    cm_state = (item.get('values') or (None,))[0]
+                    if cm_state == 1:
+                        job_started = True
+                        self._log('Job running (!CM 1).')
+                    elif cm_state == 3:
+                        self._log('Job paused at NR — press green to resume.')
+                    elif cm_state == -1:
+                        self._log('Machine in panel/jog mode (!CM -1).')
+                    # Waiting on the operator must not eat the job's timeout.
+                    deadline = max(deadline, time.monotonic() + timeout_s)
+                    continue
+                if item['type'] == 'ack' and item.get('cmd', '').startswith('!LB'):
+                    self._log(f'Machine message: {item.get("label")!r}')
+                    continue
+                if item['type'] == 'ack' and item.get('cmd', '').startswith('!ET'):
+                    if job_started:
+                        self._log(f'Job complete (!ET {item.get("value")}).')
+                        return
+                    continue
                 if item['type'] == 'motor':
+                    if cm_state is not None:
+                        continue   # IQ: completion comes from !CM/!ET only
                     axis, value = item['axis'], item['value']
                     if axis == 'E':
                         # !ME accompanies job receipt and is not axis motion;
@@ -1583,6 +1652,13 @@ class GTSConnection:
                             self._log('Job complete (all axes returned home).')
                             return
                         continue
+                    # Only a changed value is motion; a repeated value is an
+                    # idle position report (IQ Y holding at 46.17 mm read as
+                    # motion, 2026-10-28).
+                    prev = last_axis_value.get(axis)
+                    last_axis_value[axis] = value
+                    if prev is None or value == prev:
+                        continue   # first report is a baseline, not motion
                     last_motion_time = time.monotonic()
                     if value > 0:
                         axes_seen_moving.add(axis)

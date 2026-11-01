@@ -174,7 +174,9 @@ async function pollServer() {
     const d = await r.json();
     $('serverDot').className = 'dot on';
     $('serverText').textContent = `server ${d.version}`;
-    if (d.connected) pollMachine();
+    // The bare server only connects when /machine is hit, so a paired page
+    // must keep asking — otherwise a missed first connect never recovers.
+    if (d.connected || $('token').value.trim()) pollMachine();
     else setMachine(null);
   } catch {
     $('serverDot').className = 'dot';
@@ -182,9 +184,12 @@ async function pollServer() {
     setMachine(null);
   }
 }
+let machinePollInFlight = false;   // /machine can block ~10s with no machine
 async function pollMachine() {
   const token = $('token').value.trim();
   if (!token) { setMachine('unpaired'); return; }
+  if (machinePollInFlight) return;
+  machinePollInFlight = true;
   try {
     const r = await fetch(`${SERVER}/machine`, { headers: { Authorization: `Bearer ${token}` } });
     if (r.status === 401) { setMachine('rejected'); return; }
@@ -192,6 +197,7 @@ async function pollMachine() {
     if (m && m.model) savePaired(token);
     setMachine(m);
   } catch { setMachine(null); }
+  finally { machinePollInFlight = false; }
 }
 let paired = false;
 function setMachine(m) {

@@ -66,3 +66,9 @@ tray/build/
 tray/dist/
 tray/build-venv/
 tray/resources/*.iconset/
+
+# Vendor install media (proprietary) — never commit
+GS7/
+
+# Hardware probe reports (gts_probe.py)
+data/probes/

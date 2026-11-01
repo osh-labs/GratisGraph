@@ -85,3 +85,24 @@ def test_tx_log_included():
     report = s.render(duration_s=1.0)
     assert 'tx (sent by this tool)' in report
     assert 'test.m20 (268 bytes)' in report
+
+def test_ack_payloads_rendered_not_dropped():
+    from gts_api import decode_ack_payload
+    def ack(cmd, payload):
+        value, values, label = decode_ack_payload(payload)
+        return {'type': 'ack', 'cmd': cmd, 'value': value, 'values': values,
+                'label': label, 'payload': payload,
+                'raw': cmd.encode() + payload, 'text': ''}
+    s = CaptureSummary()
+    s.add(ack('!DL 8;', b'\x00\x00\x08z\x00\x00\x00\x00'))
+    s.add(ack('!LB 3;', b'HI\x00'))
+    # two different !PS replies back to back must not collapse
+    s.add(ack('!PS 16;', b'\x00\x00\x1a\xd8\x00\x00\x12\x87' + b'\xff' * 8))
+    s.add(ack('!PS 16;', b'\x00\x00\x00\x00\x00\x00\x00\x00' + b'\xff' * 8))
+    s.add(ack('!JF 0;', b''))
+    report = s.render(duration_s=1.0)
+    assert 'values=(2170, 0)' in report
+    assert "label='HI'" in report
+    assert 'values=(6872, 4743, -1, -1)' in report
+    assert 'values=(0, 0, -1, -1)' in report
+    assert report.count('(no payload)') == 1      # only the genuine !JF 0;
