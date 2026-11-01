@@ -5,6 +5,7 @@
 # The desktop bench package and job files are compared byte for byte on Windows too.
 desktop/bench/** text eol=lf
 *.ggj text eol=lf
+desktop/library/** text eol=lf
 *.m20 binary
 *.SPL binary
 *.bin binary

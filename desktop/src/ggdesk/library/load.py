@@ -384,7 +384,8 @@ def load_entry(path: Path, kind: str) -> tuple[Any, dict[str, Source]]:
     if isinstance(version, bool) or not isinstance(version, int) or version < 1:
         raise EntryError("version must be an integer >= 1 (bump it when a value changes)")
     sources = _sources(doc)
-    ref = EntryRef(kind, path.stem, version, hashlib.sha256(raw).hexdigest())
+    # Hash with LF line ends: the same entry gives the same hash on Windows (CRLF checkout) and Linux.
+    ref = EntryRef(kind, path.stem, version, hashlib.sha256(raw.replace(b"\r\n", b"\n")).hexdigest())
     return _PARSERS[kind](doc, ref, _Ctx(kind, sources)), sources
 
 
