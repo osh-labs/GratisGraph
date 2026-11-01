@@ -1,7 +1,7 @@
 # M2 plan: tooling program software and the bench package
 
-Status: approved for build 2026-11-01 (owner questions answered by the coding agent under delegated
-authority; owner to confirm). Not started.
+Status: software complete 2026-11-01 (PRs #16 to #21 and the M2.Z integration PR); hardware stages V3 and V4
+not yet run. Owner questions answered by the coding agent under delegated authority; owner to confirm.
 
 ## Bottom line
 
