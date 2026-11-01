@@ -9,6 +9,8 @@ import hashlib
 
 from ggdesk import __version__, gts_read
 from ggdesk.gate.residual import residual_lines
+from ggdesk.gate.rules_hard import HARD_RULES
+from ggdesk.gate.rules_soft import SOFT_RULES
 from ggdesk.gate.types import (
     Finding,
     GateConfig,
@@ -21,7 +23,7 @@ from ggdesk.gate.types import (
 )
 
 # M1.2 fills this tuple, in rule-id order. Nothing else in the gate changes when a rule is added.
-RULES: tuple[Rule, ...] = ()
+RULES: tuple[Rule, ...] = HARD_RULES + SOFT_RULES
 
 
 def run_gate(data: bytes, inputs: GateInputs, rules: tuple[Rule, ...] | None = None) -> GateReport:

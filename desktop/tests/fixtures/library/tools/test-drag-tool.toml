@@ -1,0 +1,29 @@
+schema_version = 1
+kind = "tool"
+id = "test-drag-tool"
+version = 1
+name = "TEST ONLY: drag tool, no spindle"
+type = "drag_diamond"
+
+[sources.test]
+title = "Test fixture (invented values)"
+path = "desktop/tests/fixtures/library/README.md"
+kind = "project_decision"
+
+[needs_spindle]
+value = false
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[needs_nose]
+value = false
+src = "test"
+ref = "test"
+confidence = "DEFINED"
+
+[tip_width_mm]
+value = 0.2
+src = "test"
+ref = "test"
+confidence = "DEFINED"
