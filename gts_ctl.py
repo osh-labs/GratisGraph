@@ -8,8 +8,17 @@ def main():
     ap.add_argument('output',  nargs='?', help='Output .m20 file')
     ap.add_argument('--units',      default='mm', choices=['mm', 'inch'])
     ap.add_argument('--speed',      type=int,   default=None)
-    ap.add_argument('--depth',      type=int,   default=None)
-    ap.add_argument('--lift',       type=int,   default=None)
+    ap.add_argument('--pz',         type=int,   default=None,
+                    help='PZ: engraving depth value (M20 IQ with nose: Z overtravel past touch-off)')
+    ap.add_argument('--dz',         type=int,   default=None, help='DZ: Z clearance')
+    ap.add_argument('--mc',         type=int,   default=0, choices=[0, 1],
+                    help='MC: 1 runs the spindle (rotary tools); default 0')
+    ap.add_argument('--vz',         type=int,   default=None, help='VZ: Z speed (default: --speed)')
+    ap.add_argument('--vd',         type=int,   default=None, help='VD: plunge speed (default: not sent)')
+    ap.add_argument('--depth',      type=int,   default=None,
+                    help='Deprecated: sets DZ (Z clearance). Use --dz')
+    ap.add_argument('--lift',       type=int,   default=None,
+                    help='Deprecated: sets PZ (engraving depth). Use --pz')
     ap.add_argument('--scale',      type=float, default=1.0)
     ap.add_argument('--arc-steps',  type=int,   default=72)
     ap.add_argument('--origin',     default='0,0')
@@ -68,11 +77,20 @@ def main():
         ap.print_help(); sys.exit(0)
 
     from gts_prepare import from_file
-    from gts_api import DEFAULT_SPEED, DEFAULT_DEPTH, DEFAULT_LIFT, GTSConnection
+    from gts_api import DEFAULT_SPEED, DEFAULT_DZ, DEFAULT_PZ, GTSConnection
 
     speed = args.speed or DEFAULT_SPEED
-    depth = args.depth or DEFAULT_DEPTH
-    lift  = args.lift  or DEFAULT_LIFT
+    # --depth/--lift are the deprecated, mislabelled names for DZ/PZ.
+    if args.depth is not None and args.dz is not None:
+        ap.error('pass --dz or the deprecated --depth, not both')
+    if args.lift is not None and args.pz is not None:
+        ap.error('pass --pz or the deprecated --lift, not both')
+    if args.depth is not None or args.lift is not None:
+        print('warning: --depth/--lift are deprecated (they set DZ/PZ); use --dz/--pz',
+              file=sys.stderr)
+    dz = args.dz if args.dz is not None else (args.depth if args.depth is not None else DEFAULT_DZ)
+    pz = args.pz if args.pz is not None else (args.lift if args.lift is not None else DEFAULT_PZ)
+    depth, lift = dz, pz   # legacy names for the dry-run translator below
 
     if args.dry_run:
         from gts_translator import translate
@@ -84,7 +102,7 @@ def main():
         return
 
     gts = from_file(args.input, origin=origin, flip_y=args.flip_y, scale=args.scale,
-                    speed=speed, depth=depth, lift=lift,
+                    speed=speed, pz=pz, dz=dz, mc=args.mc, vz=args.vz, vd=args.vd,
                     arc_steps=args.arc_steps, envelope_mm=envelope,
                     profile=profile)
 

@@ -34,6 +34,14 @@ CASES = {
     'speed_40':        ([(1000, 2000, [(2000, 0)])], {'speed': 40}),
     'depth_pz_100':    ([(1000, 2000, [(2000, 0)])], {'pz': 100}),
     'negative_deltas': ([(5000, 5000, [(-1000, -1000), (500, -500)])], {}),
+    # Rotary setup parameters. rotary_run3 = the clean rotary diamond cut on
+    # the M20 IQ (PROTOCOL_FINDINGS.md, 2026-10-29), byte-identical to the
+    # job gts_probe.py sent.
+    'rotary_run3':     ([(4500, 4500, [(1000, 0), (0, 1000), (-1000, 0), (0, -1000)])],
+                        {'speed': 10, 'pz': 50, 'mc': 1, 'vz': 5}),
+    'rotary_vd':       ([(1000, 2000, [(2000, 0)]), (3000, 4000, [(1000, 0)])],
+                        {'speed': 10, 'pz': 50, 'mc': 1, 'vz': 5, 'vd': 15}),
+    'vz_only':         ([(1000, 2000, [(2000, 0)])], {'vz': 12}),
 }
 
 MANIFEST = os.path.join(HERE, 'build_gts_fixtures.json')

@@ -20,7 +20,7 @@ const fixtures = JSON.parse(
 ) as {
   cases: Record<string, {
     strokes: [number, number, [number, number][]][];
-    opts: { speed?: number; pz?: number; dz?: number };
+    opts: { speed?: number; pz?: number; dz?: number; mc?: 0 | 1; vz?: number; vd?: number };
     expected_hex: string;
     sha256: string;
     bytes: number;
@@ -50,4 +50,12 @@ for (const [name, c] of Object.entries(fixtures.cases)) {
 
 test('buildGts throws on empty strokes', () => {
   assert.throws(() => buildGts([]), /empty/);
+});
+
+test('buildGts refuses out-of-range setup values', () => {
+  const one: Stroke[] = [{ start: [1000, 1000], deltas: [[1000, 0]] }];
+  assert.throws(() => buildGts(one, { pz: -1 }), /pz/);
+  assert.throws(() => buildGts(one, { vz: 70000 }), /vz/);
+  assert.throws(() => buildGts(one, { vd: 1.5 }), /vd/);
+  assert.throws(() => buildGts(one, { mc: 2 as 1 }), /mc/);
 });

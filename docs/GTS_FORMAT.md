@@ -118,8 +118,9 @@ machine behaviour on model_code, never platform_type.
 
 ```
 [94-byte header]
-[setup commands: DR MC VS VZ PZ DZ]
+[setup commands: DR MC VS VZ PZ DZ, then VD if a plunge speed is set]
 [stroke blocks, simply concatenated — no records between them]
+[MC 0, rotary jobs only (MC 1 in setup)]
 [12-byte return-to-home segment (delta)]
 [JF]
 ```
@@ -161,8 +162,19 @@ documented) · `VS 25` (vector speed) · `VZ 25` (= VS) · `PZ` (ENGRAVING DEPTH
 default→PZ 0; confirmed 2026-06-09) · `DZ 500` (drag depth).
 
 **Spindle (MC):** Quick sends `MC 1` to spin the cutter, `MC 0` for drag/diamond
-engraving with no spindle. Our driver always sent `MC 0` (correct for diamond
-drag). To run a rotary cutter, send `MC 1`.
+engraving with no spindle. The builders send `MC 0` by default (correct for
+diamond drag). To run a rotary cutter, send `MC 1`.
+
+**Builder setup options (2026-11-01).** `build_gts` (Python) and `buildGts`
+(TypeScript) take `mc`, `vz` and `vd` in addition to `speed`, `pz`, `dz`.
+Defaults leave the bytes unchanged. With `mc=1` the setup sends `MC 1` and
+the job sends `MC 0` before the return-to-home record; `vz` replaces the Z
+speed that otherwise equals `VS`; `vd` appends `VD` after `DZ`. This is the
+layout of the rotary diamond cut that ran clean on the M20 IQ (run 3,
+PROTOCOL_FINDINGS.md), and `tests/test_rotary_params.py` holds the builder to
+those exact bytes. In `gts_prepare` and `gts_ctl` the old names `depth` and
+`lift` (which set `DZ` and `PZ` respectively) are deprecated in favour of
+`dz` and `pz`.
 
 **Depth (PZ):** Quick actively drives PZ from the operator's depth field
 (imperial inches on the captured install, UI-capped ~0.393"≈10mm). PZ 0→100
