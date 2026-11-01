@@ -406,6 +406,7 @@ part, fixture and recipe entries. It never edits the job.
 | S3 | Fill regions or features narrower than the tip width (left unengraved) | toolpath report | Hairline region |
 | S4 | Fixture datum tolerance not yet measured | `fixtures/` | Fixture with null tolerance |
 | S5 | Estimated run time over a configured limit | optimiser estimate | Long fill |
+| S6 | Setup value inside the machine range but outside the values observed on that machine (added by the M1 review, `reviews/m1-review.md`) | `machines/` (`observed`) | `PZ` 80 on the IQ |
 
 ### 9.3 Report and binding
 

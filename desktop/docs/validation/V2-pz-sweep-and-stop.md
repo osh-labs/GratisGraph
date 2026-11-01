@@ -17,8 +17,11 @@ depends on its unit.
 
 All built with recipe `scrap-rotary-diamond-trace` (draft) and fixture `bare-bed`, part `bench-scrap-40`.
 Sha256 and the exact regeneration command of each file are in `desktop/bench/MANIFEST.md`. Each report
-passes with 2 flags (S1 draft recipe, S4 bare-bed tolerance): ack `I ACCEPT 2 FLAGS`. The bench override
-`pz = N` is printed in each report's residual lines.
+passes with 2 flags (S1 draft recipe, S4 bare-bed tolerance), ack `I ACCEPT 2 FLAGS`, except `PZ` 80 and
+100, which also carry S6 ("PZ has not been run on m20-iq", observed 5..50): ack `I ACCEPT 3 FLAGS`. The
+bench override `pz = N` is printed in each report's residual lines. After this stage, widen
+`observed.pz` in the machine entry (user library override citing this log) so S6 stops flagging values
+that have now been run.
 
 | File | Content | `PZ` |
 |---|---|---|
@@ -46,7 +49,7 @@ For each `N` in 20, 50, 80, 100, and for each repeat r in 1, 2, 3:
 
 ```sh
 ggdesk send desktop/bench/V2/v2-pzN.m20 --report desktop/bench/V2/v2-pzN.gate.json \
-    --job desktop/bench/V2/v2-square-10mm.ggj --ack "I ACCEPT 2 FLAGS" --operator <name> \
+    --job desktop/bench/V2/v2-square-10mm.ggj --ack "<phrase from MANIFEST.md>" --operator <name> \
     --capture desktop/work/v2-pzN-rr.jsonl
 ```
 

@@ -2,7 +2,7 @@
 schema_version = 1
 kind = "machine"
 id = "m20-iq"
-version = 1
+version = 2
 name = "Gravograph M20 IQ+"
 send_enabled = true
 completion = "et_after_cm1"   # one !ET after !CM 4; = 1 per green press (GTS_FORMAT.md 6)
@@ -87,6 +87,50 @@ min = 15
 max = 15
 src = "findings"
 ref = "M20 IQ Hardware Probes: VD 15 in setup accepted (one value)"
+confidence = "CONFIRMED"
+
+# Values actually run on this IQ (2026-10-29 probes and cuts). Inside `ranges` but outside these, the
+# gate flags (S6): the operator acknowledges running an untried value. Widen with each logged run.
+[observed.mc]
+min = 0
+max = 1
+src = "findings"
+ref = "M20 IQ Hardware Probes, spindle table: MC 0 and MC 1"
+confidence = "CONFIRMED"
+
+[observed.vs]
+min = 10
+max = 25
+src = "findings"
+ref = "Rotary diamond cut runs 1-3: VS 25, 15, 10"
+confidence = "CONFIRMED"
+
+[observed.vz]
+min = 5
+max = 25
+src = "findings"
+ref = "Rotary diamond cut runs 1-3: VZ 25, 5, 5"
+confidence = "CONFIRMED"
+
+[observed.pz]
+min = 5
+max = 50
+src = "findings"
+ref = "Rotary diamond cut runs 1-3: PZ 10, 5, 50; spindle probes PZ 10"
+confidence = "CONFIRMED"
+
+[observed.dz]
+min = 500
+max = 500
+src = "findings"
+ref = "Every IQ job: DZ 500"
+confidence = "CONFIRMED"
+
+[observed.vd]
+min = 15
+max = 15
+src = "findings"
+ref = "M20 IQ Hardware Probes: VD 15"
 confidence = "CONFIRMED"
 
 [max_job_bytes]

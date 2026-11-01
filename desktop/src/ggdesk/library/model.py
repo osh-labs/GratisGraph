@@ -131,6 +131,8 @@ class Machine:
     ranges: Mapping[str, Fact[Range]]
     completion: str
     max_job_bytes: Fact[int]
+    # Values observed on this machine (subset of `ranges`); outside them the gate flags (S6), never blocks.
+    observed: Mapping[str, Fact[Range]] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)

@@ -141,6 +141,9 @@ class H3SingleFinalJF:
             for c in jfs[:-1] if jfs[-1] is last else jfs:
                 out.append(Finding(self.id, self.severity, f"extra JF ({len(jfs)} in the job; exactly one allowed)",
                                    c.offset))
+        for c in jfs:
+            if c.arg != 0:
+                out.append(Finding(self.id, self.severity, f"JF {c.arg} (the job end is JF 0)", c.offset))
         if jfs and not (isinstance(last, Command) and last.op == "JF"):
             out.append(Finding(self.id, self.severity, "the final record is not JF",
                                None if last is None else last.offset))
@@ -422,7 +425,57 @@ class H9PenUpBeforeRapid:
                 nxt = recs[i + 1] if i + 1 < len(recs) else None
                 if not (isinstance(nxt, Command) and nxt.op == "PD"):
                     out.append(Finding(self.id, self.severity, "ZA not immediately followed by PD", r.offset))
+        out.extend(_grammar(job))
         return _cap(self.id, out)
+
+
+_STRUCT = ("ZA", "PD", "PU")
+
+
+def _grammar(job: gts_read.Job) -> list[Finding]:
+    """Record grammar of GTS_FORMAT 5.1/5.5 over the motion records (segments, ZA, PD, PU).
+
+    After the setup block: (rapid+, ZA 1, PD 0, segment+, PU 0, PU 0, PU 1)* then rapid+ to home, then JF.
+    Setup opcodes (H5), unknown opcodes (H4) and JF (H3) are judged by their own rules and skipped
+    here, so a stray PU, ZA or PD anywhere else is refused. Reports the first deviation only: after it
+    the alignment is lost.
+    """
+    recs = [r for r in job.records if isinstance(r, Segment) or (isinstance(r, Command) and r.op in _STRUCT)]
+    i, n = 0, len(recs)
+
+    def bad(k: int, why: str) -> list[Finding]:
+        r = recs[k] if k < n else None
+        what = "end of job" if r is None else (f"{r.op} {r.arg}" if isinstance(r, Command) else "segment")
+        return [Finding("H9", Severity.HARD, f"record grammar: {why} (found {what})",
+                        None if r is None else r.offset)]
+
+    def is_cmd(k: int, op: str, arg: int) -> bool:
+        r = recs[k] if k < n else None
+        return isinstance(r, Command) and r.op == op and r.arg == arg
+
+    def segs(k: int) -> int:
+        while k < n and isinstance(recs[k], Segment):
+            k += 1
+        return k
+
+    while i < n:
+        j = segs(i)
+        if j == i:
+            return bad(i, "expected a rapid segment")
+        if j == n:
+            return []                                 # rapid(s) to home, then JF (H3)
+        if not is_cmd(j, "ZA", 1):
+            return bad(j, "expected ZA 1 after the stroke header")
+        if not is_cmd(j + 1, "PD", 0):
+            return bad(j + 1, "expected PD 0 after ZA 1")
+        k = segs(j + 2)
+        if k == j + 2:
+            return bad(k, "expected pen-down segments after PD 0")
+        for m, arg in enumerate((0, 0, 1)):
+            if not is_cmd(k + m, "PU", arg):
+                return bad(k + m, "expected PU 0, PU 0, PU 1 to close the stroke")
+        i = k + 3
+    return bad(n, "expected a return to home after the last stroke")
 
 
 def _key(points: tuple[UPt, ...]) -> tuple[UPt, ...]:

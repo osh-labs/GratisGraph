@@ -44,7 +44,7 @@ def default_runner_factory(machine: Any = None) -> Any:
     """
     run = importlib.import_module("ggdesk.run")
     joblog = importlib.import_module("ggdesk.joblog")
-    conn = run.open_connection() if hasattr(run, "open_connection") else joblog.open_connection()
+    conn = run.open_connection()
     if getattr(conn, "dev", None) is None:
         conn.connect(timeout_s=5.0)
     return run.Runner(conn, joblog.JobLog(), machine=machine)
@@ -55,6 +55,11 @@ class BenchSession:
                  runner_factory: Callable[[], Any] | None = None) -> None:
         self.library = library if library is not None else load_library(None, paths.user_library())
         self.state = SessionState()
+        if self.library.errors:
+            # an invalid user entry is listed, never silently dropped (blueprint 6)
+            self.state.status = (f"No job loaded. {len(self.library.errors)} library entr"
+                                 f"{'y is' if len(self.library.errors) == 1 else 'ies are'} invalid and not loaded: "
+                                 + "; ".join(str(e) for e in self.library.errors[:3]))
         self._listeners: list[Callable[[SessionState], None]] = []
         self.runner_factory: Callable[[], Any] = runner_factory or (
             lambda: default_runner_factory(self._machine_entry()))
@@ -143,6 +148,9 @@ class BenchSession:
         self.operator = operator
         if self.runner is None:
             self.runner = self.runner_factory()
+        if hasattr(self.runner, "machine"):
+            # the machine of THIS report's selection, not the one current when the runner was made
+            self.runner.machine = self.library.machines.get(report.selection.machine)
         return self.runner.send_gated(data, report, typed_ack.strip(), operator=operator or None)
 
     def _machine_entry(self) -> Any:

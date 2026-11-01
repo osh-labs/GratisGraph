@@ -460,7 +460,7 @@ def test_log_record_contents(inputs: GateInputs, machine: Machine, log: JobLog,
     summary = done["report"]
     assert summary["passed"] is True and summary["flags"] == 1 and summary["findings"] == ["S9"]
     assert summary["selection"] == SEL.to_obj()
-    assert {(e["kind"], e["id"], e["version"]) for e in summary["entries"]} >= {("machine", "m20-iq", 1)}
+    assert {(e["kind"], e["id"], e["version"]) for e in summary["entries"]} >= {("machine", "m20-iq", 2)}
     assert sent["event"] == "sent" and sent["ended"] is None
     assert "I ACCEPT" not in log.path.read_text(encoding="utf-8")
 
@@ -551,3 +551,71 @@ def test_only_run_py_calls_the_driver_send() -> None:
     assert list(_py_files()), "source tree not found"
     assert ".send_gts(data, home_first=True)" in allowed.read_text(encoding="utf-8")
     assert ".send_raw(" not in allowed.read_text(encoding="utf-8")
+
+
+def test_no_other_path_to_the_device() -> None:
+    """Wider guard (review M1, finding 11), on the AST: outside run.py no attribute, name or exact string
+    constant (getattr) refers to a driver write method, and nothing anywhere writes to a USB device."""
+    import ast
+
+    names = {"send_gts", "send_raw", "send_job", "send_ascii", "tool_up", "jog"}
+    allowed = DESKTOP / "src" / "ggdesk" / "run.py"
+    offenders: list[str] = []
+    for p in _py_files():
+        tree = ast.parse(p.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            hit = None
+            if isinstance(node, ast.Attribute):
+                hit = node.attr if node.attr in names else None
+                if node.attr == "write" and isinstance(node.value, ast.Name) and node.value.id in ("dev", "device"):
+                    hit = "dev.write"
+            elif isinstance(node, ast.Name) and node.id in names:
+                hit = node.id
+            elif isinstance(node, ast.Constant) and isinstance(node.value, str) and node.value in names:
+                hit = node.value
+            elif isinstance(node, (ast.Import, ast.ImportFrom)):
+                mods = [a.name for a in node.names] if isinstance(node, ast.Import) else [node.module or ""]
+                if any(m == "usb" or m.startswith("usb.") for m in mods):
+                    hit = "import usb"
+            if hit and (p != allowed or hit in ("dev.write", "import usb")):
+                offenders.append(f"{p.relative_to(DESKTOP)}:{getattr(node, 'lineno', 0)} {hit}")
+    assert offenders == []
+
+
+# --- review M1 fixes ----------------------------------------------------------------------------
+
+def test_in_flight_cleared_when_the_log_fails(inputs: GateInputs, machine: Machine, log: JobLog,
+                                              home_ok: list[tuple[bytes, Machine]],
+                                              monkeypatch: pytest.MonkeyPatch) -> None:
+    data = gts()
+    rep = report_for(data, inputs)
+    r = runner(FakeConn(), log, machine)
+    real = log.append
+
+    def failing(rec: Any) -> None:
+        if rec.get("event") == "sent":
+            raise OSError("disk full")
+        real(rec)
+
+    monkeypatch.setattr(log, "append", failing)
+    with pytest.raises(OSError):
+        r.send_gated(data, rep)
+    assert not r.in_flight                     # a later send is not refused as "already in flight"
+    monkeypatch.setattr(log, "append", real)
+    assert r.send_gated(data, rep).status == "completed"
+
+
+def test_model_code_change_during_send_is_not_completed(inputs: GateInputs, machine: Machine, log: JobLog,
+                                                        home_ok: list[tuple[bytes, Machine]]) -> None:
+    data = gts()
+    rep = report_for(data, inputs)
+    conn = FakeConn()
+    orig = conn.send_gts
+
+    def late_id(gts_bytes: bytes, home_first: bool = True) -> None:
+        orig(gts_bytes, home_first)
+        conn.model_code = 0x0204          # a late !ID changed the driver's model code
+    conn.send_gts = late_id  # type: ignore[method-assign]
+    res = runner(conn, log, machine).send_gated(data, rep)
+    assert res.status == "unconfirmed"
+    assert "model code changed" in log.records()[-1]["error"]
