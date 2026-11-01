@@ -1,0 +1,24 @@
+Gate report  PASS, 2 flag(s) to acknowledge
+sha256       bf1a4fb3fc4a74ce888144bd006dba51897b49973f05bf0f8b211682ece71479
+bytes        4198
+model code   0x020D
+app          ggdesk 0.1.0
+library      machine:m20-iq v2, tool:rotary-diamond v1, part:bench-scrap-40 v1, fixture:bare-bed v1, recipe:scrap-rotary-diamond-trace v1, material:scrap-aluminum v1
+run time     about 48 s (estimate)
+
+Hard (block): 0
+Soft (flag):  2
+  S1  recipe scrap-rotary-diamond-trace v1 is draft (not yet validated on the target part)
+  S4  fixture bare-bed tolerance not measured (G15): placement error unknown
+To send, type: I ACCEPT 2 FLAGS
+
+Residual status (always shown):
+  Depth is set by hand: nose fitted, knob 5 notches, pressure 2. Software cannot verify these.
+  Recipe scrap-rotary-diamond-trace v1 is draft (not yet validated on the target part).
+  Not measured: fixture tolerance (G15).
+  Not measured: minimum character height (G5).
+  Not measured: tool tip width (G3).
+  Job size limit not measured (G9): H11 inactive.
+  Work field 100 x 100 mm is [STRONG] (M20_PROFILE envelope_mm (not measured on the IQ)), not measured on this machine.
+  PZ units are [HYPOTHESIS] (likely 0.01 mm overtravel with the nose; G4).
+  Model code checked against the library (0x020D); the connected machine is checked again at send.

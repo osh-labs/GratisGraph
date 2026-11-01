@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="560" viewBox="-6 -6 112 112">
+<!-- GratisGraph Desktop preview from decoded .m20 bytes. Machine frame, mm: home (0,0) back-left, +X right, +Y toward the operator (drawn down). -->
+<style>
+.field {fill:none;stroke:#6b7280;stroke-width:0.3;stroke-dasharray:2 1}
+.part {fill:#e5e7eb;stroke:#374151;stroke-width:0.25}
+.keep-out {fill:#fca5a5;fill-opacity:0.5;stroke:#b91c1c;stroke-width:0.25}
+.rapid {fill:none;stroke:#2563eb;stroke-width:0.15;stroke-dasharray:1 0.6}
+.cut {fill:none;stroke:#111827;stroke-width:0.3;stroke-linejoin:round;stroke-linecap:round}
+.start {fill:#16a34a;stroke:none}
+.label {fill:#374151;font-family:sans-serif;font-size:3px}
+</style>
+<polyline class="field" data-kind="field" points="0,0 100,0 100,100 0,100 0,0"/>
+<polyline class="part" data-kind="part" points="30,70 70,70 70,30 30,30 30,70"/>
+<polyline class="rapid" data-kind="rapid" points="0,0 45.5,43.9"/>
+<polyline class="rapid" data-kind="rapid" points="45.5,44.9 46.4,44.9"/>
+<polyline class="rapid" data-kind="rapid" points="45.5,43.9 47.3,46"/>
+<polyline class="rapid" data-kind="rapid" points="48.9,46 48.6,45.3"/>
+<polyline class="rapid" data-kind="rapid" points="47.6,45.3 49.1,43.9"/>
+<polyline class="rapid" data-kind="rapid" points="50.5,43.9 52.4,44.4"/>
+<polyline class="rapid" data-kind="rapid" points="52.4,45.5 53.1,46"/>
+<polyline class="rapid" data-kind="rapid" points="53.1,43.9 54.5,46"/>
+<polyline class="rapid" data-kind="rapid" points="54.5,43.9 54.5,44.9"/>
+<polyline class="rapid" data-kind="rapid" points="53.1,44.9 49.8,43.9"/>
+<polyline class="rapid" data-kind="rapid" points="49.8,46 50,47"/>
+<polyline class="rapid" data-kind="rapid" points="50,53 53,50"/>
+<polyline class="rapid" data-kind="rapid" points="47,50 32,68"/>
+<polyline class="rapid" data-kind="rapid" points="32,68 0,0"/>
+<polyline class="cut" data-kind="cut" points="45.5,43.9 45.5,46"/>
+<polyline class="cut" data-kind="cut" points="45.5,46 46.4,46 46.7,45.9 46.8,45.8 46.9,45.6 46.9,45.3 46.8,45.1 46.7,45 46.4,44.9 45.5,44.9"/>
+<polyline class="cut" data-kind="cut" points="46.4,44.9 46.7,44.8 46.8,44.7 46.9,44.5 46.9,44.3 46.8,44.1 46.7,44 46.4,43.9 45.5,43.9"/>
+<polyline class="cut" data-kind="cut" points="47.3,46 48.1,43.9"/>
+<polyline class="cut" data-kind="cut" points="48.1,43.9 48.9,46"/>
+<polyline class="cut" data-kind="cut" points="48.6,45.3 47.6,45.3"/>
+<polyline class="cut" data-kind="cut" points="49.1,43.9 50.5,43.9"/>
+<polyline class="cut" data-kind="cut" points="52.4,44.4 52.3,44.2 52.1,44 51.9,43.9 51.5,43.9 51.3,44 51.1,44.2 51,44.4 50.9,44.7 50.9,45.2 51,45.5 51.1,45.7 51.3,45.9 51.5,46 51.9,46 52.1,45.9 52.3,45.7 52.4,45.5"/>
+<polyline class="cut" data-kind="cut" points="53.1,46 53.1,43.9"/>
+<polyline class="cut" data-kind="cut" points="54.5,46 54.5,43.9"/>
+<polyline class="cut" data-kind="cut" points="54.5,44.9 53.1,44.9"/>
+<polyline class="cut" data-kind="cut" points="49.8,43.9 49.8,46"/>
+<polyline class="cut" data-kind="cut" points="50,47 50,53"/>
+<polyline class="cut" data-kind="cut" points="53,50 47,50"/>
+<polyline class="cut" data-kind="cut" points="32,68 68,68 68,32 32,32 32,68"/>
+<circle class="start" data-kind="start" cx="45.5" cy="43.9" r="0.8"/>
+<text class="label" x="50" y="104" text-anchor="middle">operator</text>
+</svg>

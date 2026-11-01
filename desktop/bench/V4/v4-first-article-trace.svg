@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="560" height="560" viewBox="-6 -6 112 112">
+<!-- GratisGraph Desktop preview from decoded .m20 bytes. Machine frame, mm: home (0,0) back-left, +X right, +Y toward the operator (drawn down). -->
+<style>
+.field {fill:none;stroke:#6b7280;stroke-width:0.3;stroke-dasharray:2 1}
+.part {fill:#e5e7eb;stroke:#374151;stroke-width:0.25}
+.keep-out {fill:#fca5a5;fill-opacity:0.5;stroke:#b91c1c;stroke-width:0.25}
+.rapid {fill:none;stroke:#2563eb;stroke-width:0.15;stroke-dasharray:1 0.6}
+.cut {fill:none;stroke:#111827;stroke-width:0.3;stroke-linejoin:round;stroke-linecap:round}
+.start {fill:#16a34a;stroke:none}
+.label {fill:#374151;font-family:sans-serif;font-size:3px}
+</style>
+<polyline class="field" data-kind="field" points="0,0 100,0 100,100 0,100 0,0"/>
+<polyline class="part" data-kind="part" points="30,70 70,70 70,30 30,30 30,70"/>
+<polyline class="rapid" data-kind="rapid" points="0,0 38.86,45.43"/>
+<polyline class="rapid" data-kind="rapid" points="36.86,47.57 41.29,47"/>
+<polyline class="rapid" data-kind="rapid" points="39.86,47 39.43,48"/>
+<polyline class="rapid" data-kind="rapid" points="41.71,48 42.43,48"/>
+<polyline class="rapid" data-kind="rapid" points="44.71,48 45.86,48"/>
+<polyline class="rapid" data-kind="rapid" points="45.86,46.57 48.86,48"/>
+<polyline class="rapid" data-kind="rapid" points="48.86,45 48.86,48"/>
+<polyline class="rapid" data-kind="rapid" points="50.57,48 51.29,46.43"/>
+<polyline class="rapid" data-kind="rapid" points="52.43,46.43 53.14,48"/>
+<polyline class="rapid" data-kind="rapid" points="53.14,45 55.86,45"/>
+<polyline class="rapid" data-kind="rapid" points="57.86,45 56.86,45"/>
+<polyline class="rapid" data-kind="rapid" points="56.86,48 58.14,48"/>
+<polyline class="rapid" data-kind="rapid" points="60.43,48 60,47"/>
+<polyline class="rapid" data-kind="rapid" points="58.57,47 63.14,45.71"/>
+<polyline class="rapid" data-kind="rapid" points="62.43,46.86 60,52"/>
+<polyline class="rapid" data-kind="rapid" points="59.76,54.02 59.05,54.5"/>
+<polyline class="rapid" data-kind="rapid" points="57.5,52.6 55.36,52.48"/>
+<polyline class="rapid" data-kind="rapid" points="55.95,54.5 53.33,52"/>
+<polyline class="rapid" data-kind="rapid" points="53.33,52 50,54.5"/>
+<polyline class="rapid" data-kind="rapid" points="48.45,52.6 45.83,52"/>
+<polyline class="rapid" data-kind="rapid" points="45.83,54.5 45.24,53.19"/>
+<polyline class="rapid" data-kind="rapid" points="44.29,53.19 43.33,52"/>
+<polyline class="rapid" data-kind="rapid" points="41.67,54.5 40.71,54.5"/>
+<polyline class="rapid" data-kind="rapid" points="40.71,52 38.69,52"/>
+<polyline class="rapid" data-kind="rapid" points="40.12,54.5 0,0"/>
+<polyline class="cut" data-kind="cut" points="38.86,45.43 38.57,45.14 38.14,45 37.57,45 37.14,45.14 36.86,45.43 36.86,45.71 37,46 37.14,46.14 37.43,46.29 38.29,46.57 38.57,46.71 38.71,46.86 38.86,47.14 38.86,47.57 38.57,47.86 38.14,48 37.57,48 37.14,47.86 36.86,47.57"/>
+<polyline class="cut" data-kind="cut" points="41.29,47 39.86,47"/>
+<polyline class="cut" data-kind="cut" points="39.43,48 40.57,45"/>
+<polyline class="cut" data-kind="cut" points="40.57,45 41.71,48"/>
+<polyline class="cut" data-kind="cut" points="42.43,48 42.43,45"/>
+<polyline class="cut" data-kind="cut" points="42.43,45 43.57,48"/>
+<polyline class="cut" data-kind="cut" points="43.57,48 44.71,45"/>
+<polyline class="cut" data-kind="cut" points="44.71,45 44.71,48"/>
+<polyline class="cut" data-kind="cut" points="45.86,48 45.86,45"/>
+<polyline class="cut" data-kind="cut" points="45.86,45 47.14,45 47.57,45.14 47.71,45.29 47.86,45.57 47.86,46 47.71,46.29 47.57,46.43 47.14,46.57 45.86,46.57"/>
+<polyline class="cut" data-kind="cut" points="48.86,48 48.86,45"/>
+<polyline class="cut" data-kind="cut" points="48.86,48 50.57,48"/>
+<polyline class="cut" data-kind="cut" points="51.29,46.43 52.43,46.43"/>
+<polyline class="cut" data-kind="cut" points="53.14,48 51.29,48"/>
+<polyline class="cut" data-kind="cut" points="51.29,48 51.29,45"/>
+<polyline class="cut" data-kind="cut" points="51.29,45 53.14,45"/>
+<polyline class="cut" data-kind="cut" points="55.86,45 57.86,45"/>
+<polyline class="cut" data-kind="cut" points="56.86,45 56.86,48"/>
+<polyline class="cut" data-kind="cut" points="58.14,48 59.29,45"/>
+<polyline class="cut" data-kind="cut" points="59.29,45 60.43,48"/>
+<polyline class="cut" data-kind="cut" points="60,47 58.57,47"/>
+<polyline class="cut" data-kind="cut" points="63.14,45.71 63,45.43 62.71,45.14 62.43,45 61.86,45 61.57,45.14 61.29,45.43 61.14,45.71 61,46.14 61,46.86 61.14,47.29 61.29,47.57 61.57,47.86 61.86,48 62.43,48 62.71,47.86 63,47.57 63.14,47.29 63.14,46.86"/>
+<polyline class="cut" data-kind="cut" points="63.14,46.86 62.43,46.86"/>
+<polyline class="cut" data-kind="cut" points="60,52 61.31,52 60.6,52.95 60.95,52.95 61.19,53.07 61.31,53.19 61.43,53.55 61.43,53.79 61.31,54.14 61.07,54.38 60.71,54.5 60.36,54.5 60,54.38 59.88,54.26 59.76,54.02"/>
+<polyline class="cut" data-kind="cut" points="59.05,54.5 57.38,54.5 58.57,53.31 58.81,52.95 58.93,52.71 58.93,52.48 58.81,52.24 58.69,52.12 58.45,52 57.98,52 57.74,52.12 57.62,52.24 57.5,52.48 57.5,52.6"/>
+<polyline class="cut" data-kind="cut" points="55.36,52.48 55.6,52.36 55.95,52 55.95,54.5"/>
+<polyline class="cut" data-kind="cut" points="53.33,52 52.98,52.12 52.74,52.48 52.62,53.07 52.62,53.43 52.74,54.02 52.98,54.38 53.33,54.5 53.57,54.5 53.93,54.38 54.17,54.02 54.29,53.43 54.29,53.07 54.17,52.48 53.93,52.12 53.57,52 53.33,52"/>
+<polyline class="cut" data-kind="cut" points="50,54.5 48.33,54.5 49.52,53.31 49.76,52.95 49.88,52.71 49.88,52.48 49.76,52.24 49.64,52.12 49.4,52 48.93,52 48.69,52.12 48.57,52.24 48.45,52.48 48.45,52.6"/>
+<polyline class="cut" data-kind="cut" points="45.83,52 44.29,52"/>
+<polyline class="cut" data-kind="cut" points="44.29,52 44.29,54.5"/>
+<polyline class="cut" data-kind="cut" points="44.29,54.5 45.83,54.5"/>
+<polyline class="cut" data-kind="cut" points="45.24,53.19 44.29,53.19"/>
+<polyline class="cut" data-kind="cut" points="43.33,52 43.33,54.5"/>
+<polyline class="cut" data-kind="cut" points="43.33,54.5 41.67,52"/>
+<polyline class="cut" data-kind="cut" points="41.67,52 41.67,54.5"/>
+<polyline class="cut" data-kind="cut" points="40.71,54.5 40.71,52"/>
+<polyline class="cut" data-kind="cut" points="38.69,52 38.69,54.5"/>
+<polyline class="cut" data-kind="cut" points="38.69,54.5 40.12,54.5"/>
+<circle class="start" data-kind="start" cx="38.86" cy="45.43" r="0.8"/>
+<text class="label" x="50" y="104" text-anchor="middle">operator</text>
+</svg>

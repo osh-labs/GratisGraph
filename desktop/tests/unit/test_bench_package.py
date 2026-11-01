@@ -27,6 +27,9 @@ def test_bench_package_up_to_date() -> None:
 def test_every_bench_job_passes_the_gate_and_is_bound() -> None:
     mb = _make_bench()
     for e in mb.ENTRIES:
+        if not e.commit:
+            assert e.name in (BENCH / "MANIFEST.md").read_text(encoding="utf-8")   # sha256 + command only
+            continue
         m20 = BENCH / e.stage / f"{e.name}.m20"
         rep = GateReport.from_json((BENCH / e.stage / f"{e.name}.gate.json").read_text(encoding="utf-8"))
         assert rep.passed and rep.bound_to(m20.read_bytes()), e.name

@@ -1,0 +1,102 @@
+{
+  "app_version": "0.1.0",
+  "entries": [
+    {
+      "id": "m20-iq",
+      "kind": "machine",
+      "sha256": "060b5e3b2f339b3a4254abac0392992bbd2fc174d516ca70a3de3d3d96421825",
+      "version": 2
+    },
+    {
+      "id": "rotary-diamond",
+      "kind": "tool",
+      "sha256": "c1ad4fb7f4807a46c42924d448d439533396f7ee1391a4d75f04a267c7c67777",
+      "version": 1
+    },
+    {
+      "id": "bench-scrap-40",
+      "kind": "part",
+      "sha256": "7638f554e1ecdc99cb93e2cac084ab74b87c23829bc1bae87de128219b962581",
+      "version": 1
+    },
+    {
+      "id": "bare-bed",
+      "kind": "fixture",
+      "sha256": "23e6e96eb3a5cd208a23268517309f489ed3230957879b43d5501c529dbf3eda",
+      "version": 1
+    },
+    {
+      "id": "scrap-rotary-diamond-trace",
+      "kind": "recipe",
+      "sha256": "062d8dbcbc42fd9c91eb483627781d04590f95e146c163983861e7e665f039a7",
+      "version": 1
+    },
+    {
+      "id": "scrap-aluminum",
+      "kind": "material",
+      "sha256": "43ba850426b6c305e29c8f7950250ab85533a6dc67487eeeacf098d6f331c605",
+      "version": 1
+    }
+  ],
+  "estimate_s": 19.54421364501458,
+  "findings": [
+    {
+      "message": "recipe scrap-rotary-diamond-trace v1 is draft (not yet validated on the target part)",
+      "offset": null,
+      "rule": "S1",
+      "severity": "soft"
+    },
+    {
+      "message": "fixture bare-bed tolerance not measured (G15): placement error unknown",
+      "offset": null,
+      "rule": "S4",
+      "severity": "soft"
+    }
+  ],
+  "flags": 2,
+  "format": "gratisgraph-gate-report",
+  "job_sha256": "405a8df49afdbba14897621c4a67c15fa8e9eed197341903b9dcd2caa32df95e",
+  "model_code": 525,
+  "passed": true,
+  "residual": [
+    "Depth is set by hand: nose fitted, knob 5 notches, pressure 2. Software cannot verify these.",
+    "Recipe scrap-rotary-diamond-trace v1 is draft (not yet validated on the target part).",
+    "Not measured: fixture tolerance (G15).",
+    "Not measured: minimum character height (G5).",
+    "Not measured: tool tip width (G3).",
+    "Job size limit not measured (G9): H11 inactive.",
+    "Work field 100 x 100 mm is [STRONG] (M20_PROFILE envelope_mm (not measured on the IQ)), not measured on this machine.",
+    "PZ units are [HYPOTHESIS] (likely 0.01 mm overtravel with the nose; G4).",
+    "Model code checked against the library (0x020D); the connected machine is checked again at send."
+  ],
+  "rules_run": [
+    "H1",
+    "H2",
+    "H3",
+    "H4",
+    "H5",
+    "H6",
+    "H7",
+    "H8",
+    "H9",
+    "H10",
+    "H11",
+    "S1",
+    "S2",
+    "S3",
+    "S4",
+    "S5",
+    "S6"
+  ],
+  "selection": {
+    "extra_keep_outs": [],
+    "fixture": "bare-bed",
+    "machine": "m20-iq",
+    "nest": "centre",
+    "overrides": {},
+    "recipe": "scrap-rotary-diamond-trace"
+  },
+  "sha256": "9b20ba601b335853e0fe1b23300b935e3e519dc73fe828162ad86a5ad405c7a8",
+  "size": 16384,
+  "version": 1
+}

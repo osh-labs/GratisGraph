@@ -1,0 +1,271 @@
+{
+  "format": "gratisgraph-job",
+  "version": 1,
+  "units": "mm",
+  "part": "bench-scrap-40",
+  "quantity": 1,
+  "reference": "Fixture datum: crosshair at the part origin, axis ticks, corner marks. Parameters: arm_mm=3.0, spacing_mm=5.0, tick_mm=1.0, part=\"bench-scrap-40\", compact=false. Ticks every 5.0 mm on both axes; corner marks at (+/-18, +/-18) mm",
+  "source": {
+    "name": "ggdesk pattern datum-crosshair",
+    "version": "0.1.0"
+  },
+  "chord_tolerance_mm": 0.01,
+  "operations": [
+    {
+      "op": "trace",
+      "mode_hint": "trace",
+      "paths": [
+        {
+          "points": [
+            [
+              -3.0,
+              0.0
+            ],
+            [
+              3.0,
+              0.0
+            ]
+          ],
+          "closed": false
+        },
+        {
+          "points": [
+            [
+              0.0,
+              -3.0
+            ],
+            [
+              0.0,
+              3.0
+            ]
+          ],
+          "closed": false
+        },
+        {
+          "points": [
+            [
+              5.0,
+              -0.5
+            ],
+            [
+              5.0,
+              0.5
+            ]
+          ],
+          "closed": false
+        },
+        {
+          "points": [
+            [
+              -5.0,
+              -0.5
+            ],
+            [
+              -5.0,
+              0.5
+            ]
+          ],
+          "closed": false
+        },
+        {
+          "points": [
+            [
+              -0.5,
+              5.0
+            ],
+            [
+              0.5,
+              5.0
+            ]
+          ],
+          "closed": false
+        },
+        {
+          "points": [
+            [
+              -0.5,
+              -5.0
+            ],
+            [
+              0.5,
+              -5.0
+            ]
+          ],
+          "closed": false
+        },
+        {
+          "points": [
+            [
+              10.0,
+              -0.5
+            ],
+            [
+              10.0,
+              0.5
+            ]
+          ],
+          "closed": false
+        },
+        {
+          "points": [
+            [
+              -10.0,
+              -0.5
+            ],
+            [
+              -10.0,
+              0.5
+            ]
+          ],
+          "closed": false
+        },
+        {
+          "points": [
+            [
+              -0.5,
+              10.0
+            ],
+            [
+              0.5,
+              10.0
+            ]
+          ],
+          "closed": false
+        },
+        {
+          "points": [
+            [
+              -0.5,
+              -10.0
+            ],
+            [
+              0.5,
+              -10.0
+            ]
+          ],
+          "closed": false
+        },
+        {
+          "points": [
+            [
+              15.0,
+              -0.5
+            ],
+            [
+              15.0,
+              0.5
+            ]
+          ],
+          "closed": false
+        },
+        {
+          "points": [
+            [
+              -15.0,
+              -0.5
+            ],
+            [
+              -15.0,
+              0.5
+            ]
+          ],
+          "closed": false
+        },
+        {
+          "points": [
+            [
+              -0.5,
+              15.0
+            ],
+            [
+              0.5,
+              15.0
+            ]
+          ],
+          "closed": false
+        },
+        {
+          "points": [
+            [
+              -0.5,
+              -15.0
+            ],
+            [
+              0.5,
+              -15.0
+            ]
+          ],
+          "closed": false
+        },
+        {
+          "points": [
+            [
+              -16.0,
+              18.0
+            ],
+            [
+              -18.0,
+              18.0
+            ],
+            [
+              -18.0,
+              16.0
+            ]
+          ],
+          "closed": false
+        },
+        {
+          "points": [
+            [
+              16.0,
+              18.0
+            ],
+            [
+              18.0,
+              18.0
+            ],
+            [
+              18.0,
+              16.0
+            ]
+          ],
+          "closed": false
+        },
+        {
+          "points": [
+            [
+              16.0,
+              -18.0
+            ],
+            [
+              18.0,
+              -18.0
+            ],
+            [
+              18.0,
+              -16.0
+            ]
+          ],
+          "closed": false
+        },
+        {
+          "points": [
+            [
+              -16.0,
+              -18.0
+            ],
+            [
+              -18.0,
+              -18.0
+            ],
+            [
+              -18.0,
+              -16.0
+            ]
+          ],
+          "closed": false
+        }
+      ]
+    }
+  ]
+}

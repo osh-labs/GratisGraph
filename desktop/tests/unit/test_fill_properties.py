@@ -11,8 +11,7 @@ from __future__ import annotations
 
 import math
 
-import shapely
-from hypothesis import assume, given, settings
+from hypothesis import assume, example, given, settings
 from hypothesis import strategies as st
 from shapely.geometry import LinearRing, LineString, Point, Polygon
 
@@ -73,6 +72,16 @@ def test_points_inside_offset_region(reg: Region, p: FillParams) -> None:
             assert boundary.distance(pt) >= p.tip_width_mm / 2 - TOL
 
 
+@example(
+    reg=Region(outer=((4.42742587907751, 0.0), (3.5818627775091465, 2.6023756373397986),
+                      (1.3681498379703916, 4.210732232710464), (-1.3681498379703911, 4.210732232710464),
+                      (-3.581862777509146, 2.6023756373397995), (-4.42742587907751, 5.422032931274429e-16),
+                      (-3.581862777509147, -2.602375637339798), (-1.368149837970392, -4.210732232710464),
+                      (1.3681498379703907, -4.210732232710464), (3.581862777509146, -2.6023756373398)),
+               holes=(((-0.07556894801906044, -0.0461538087397199), (-0.0021858968404755113, 0.08852153309163203),
+                       (0.07775484485953593, -0.0423677243519121)),)),
+    p=FillParams(tip_width_mm=0.0546875, stepover_mm=1.0, hatch_angle_deg=0.0, contour_pass=True),
+)
 @settings(max_examples=150, deadline=None)
 @given(regions(), params)
 def test_footprint_stays_in_region(reg: Region, p: FillParams) -> None:
@@ -81,8 +90,12 @@ def test_footprint_stays_in_region(reg: Region, p: FillParams) -> None:
     lines = [LinearRing(q.points) if q.closed else LineString(q.points) for q in r.paths]
     if not lines:
         return
-    foot = shapely.union_all([g.buffer(p.tip_width_mm / 2, quad_segs=16) for g in lines])
-    assert foot.difference(poly).area <= 1e-6
+    # The union of the footprints lies inside the region iff every footprint does. Checking each one
+    # avoids a GEOS union_all artefact: on a decagon with a tiny hole (found by hypothesis, 2026-11-01)
+    # union_all of correct footprints reported a 0.01 mm^2 sliver outside that neither any single
+    # footprint nor an iterative union has.
+    for g in lines:
+        assert g.buffer(p.tip_width_mm / 2, quad_segs=16).difference(poly).area <= 1e-6
 
 
 @settings(max_examples=150, deadline=None)

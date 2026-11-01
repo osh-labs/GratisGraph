@@ -1,6 +1,6 @@
 # GratisGraph Desktop build plan
 
-Status: M1 software complete, 2026-11-01 (M0 and M1 software exit items met; hardware stages V0, V1, V2 not yet run). Owner: Chris Lee.
+Status: M2 software complete, 2026-11-01 (M0, M1 and M2 software delivered; bench package ready; hardware stages V0 to V4 not yet run). Owner: Chris Lee.
 
 ## Bottom line
 
@@ -44,19 +44,27 @@ A closed gap is annotated in place with its evidence, never deleted.
 | ID | Gap | Impact | How to close | Needed by |
 |---|---|---|---|---|
 | G1 | Dog tag blank: supplier, outline, thickness, alloy, finish (bare or anodized), edge (flat or rolled), hole position | Fixture design, recipe, part keep-out | Choose a supplier; measure 5 blanks with calipers; record in `library/parts/` | M2 |
+|  | *Software ready 2026-11-01 (M2): `parts/dog-tag-blank`, `materials/tag-aluminum` as needs_measurement with procedures; nest drawing marks them UNMEASURED; V3 step 0 / V4 setup.* | | | |
 | G2 | Fixture for the tag: how a thin blank is held flat and registered; datum offset from machine home | Placement error, chatter on thin stock | Build a nest; measure the datum by engraving a crosshair on 5 blanks and measuring the offset | M2 |
+|  | *Software ready 2026-11-01 (M2): nest drawing (SVG, DXF); `datum-crosshair` pattern; V4 part A.* | | | |
 | G3 | Tooling for aluminum: tool for single-line mode (rotary diamond, diamond drag, or carbide), tool and tip width for fill mode | Recipe content, fill stepover | Bench matrix in M2 with the candidate tools on the chosen blank | M2 |
+|  | *Software ready 2026-11-01 (M2): fill with tip-width offset; V3 part B line-width file.* | | | |
 | G4 | `PZ` units and effect with the nose fitted (one sample) | Recipe limits used by the gate | `PZ` sweep 20, 50, 80, 100 with `!MZ` capture; repeat 3 times | M1 |
 |  | *Software ready 2026-11-01 (M1): V2 sweep files and `ggdesk send --capture` for `!MZ`; hardware open.* | | | |
 | G5 | Minimum readable character height, per lettering mode, on the tag | Product limits handed to SEM | Character-height ladder test pattern, M2 | M2 |
+|  | *Software ready 2026-11-01 (M2): character-height ladders (trace, fill); S2 activates once recorded; V3 parts A, D.* | | | |
 | G6 | Fill stepover vs tip width, and fill pattern (hatch angle, contour pass) | Fill appearance and run time | Stepover ladder test pattern, M2 | M2 |
+|  | *Software ready 2026-11-01 (M2): stepover ladder; V3 part C.* | | | |
 | G7 | Segment `accel` field (vendor label `DANG`) effect at corners | Corner quality in text | Corner test pattern at `accel` 551 vs alternatives; ⚠ only if corners show defects | M2 |
+|  | *Software ready 2026-11-01 (M2): corner test at accel 551; other values need a driver change (deferred unless V3 part F shows defects).* | | | |
 | G8 | Where `MC 1` belongs in a builder-produced job (setup vs per stroke) | Spindle state during rapids and plunges | M0 hardware run of a builder-produced rotary job; compare to probe run 3 | M0 |
 |  | *Software half closed 2026-11-01: the builder emits run 3's layout (MC 1 in setup, MC 0 before home) and `tests/test_rotary_params.py` holds it byte-identical to the probe job. Hardware half open: stage V0.* | | | |
 | G9 | Largest job the machine accepts, and behaviour of very long jobs (the unexplained ~500 KB `PZ 100` capture) | Fill jobs may be large | Send fills of increasing size, record acceptance and `!ET` | M2 |
+|  | *Software ready 2026-11-01 (M2): job-size ladder 16 KB to 1 MB; H11 activates once recorded; V3 part E.* | | | |
 | G10 | Physical stop behaviour: what the panel stop does mid-job, and what `/abort` (`!1B 0;`) does mid-job on the IQ | Operator safety procedure, app abort semantics | Bench test with tool reversed, record telemetry | M1 |
 |  | *Software ready 2026-11-01 (M1): abort (`!1B 0;`) from the CLI (Ctrl-C) and the bench window; V2 part B; hardware open.* | | | |
 | G11 | Repeatability: depth and position over consecutive parts | Batch quality | 10 consecutive tags, measure position and inspect depth | M2 |
+|  | *Software ready 2026-11-01 (M2): repeat-batch pattern; V4 part C.* | | | |
 | G12 | Windows 10 LTSC: WinUSB driver install for the IQ, PySide6 and Python floor on 1809 | Second platform | VM and real station test | M5 |
 | G13 | Golden `.m20` outputs are git-ignored (`*.m20`), so 15 golden tests fail on a fresh clone and the Python/TypeScript byte-identity guard is not enforced | All builder changes in M0 are unguarded | Un-ignore `tests/golden/outputs/`, commit goldens, add CI | M0 |
 |  | *Closed 2026-11-01 (PR #3): goldens committed, manifest hashes unchanged; CI runs pytest on Linux and Windows and `npm test`, plus the TS fixture drift check (PR #4).* | | | |
@@ -310,11 +318,11 @@ Exit criteria:
 
 | Exit item | State | Evidence |
 |---|---|---|
-| Two confirmed recipes (trace, fill) for the chosen blank, with manual settings and minimum character height | open | |
-| Fixture datum measured over 5 blanks with a stated tolerance | open | |
-| 10-tag repeatability run logged (position and depth inspection) | open | |
-| First-article tags (both modes) photographed and logged with gate reports | open | |
-| G1, G2, G3, G5, G6, G9, G11 closed; G7 closed or deferred with reason | open | |
+| Two confirmed recipes (trace, fill) for the chosen blank, with manual settings and minimum character height | open (Chris) | Sheets `validation/V3-tooling-matrix.md`, `V4-first-article.md`; software: `m2-acceptance.md` |
+| Fixture datum measured over 5 blanks with a stated tolerance | open (Chris) | `validation/V4-first-article.md` part A; nest drawing `ggdesk drawing nest` (PR #19) |
+| 10-tag repeatability run logged (position and depth inspection) | open (Chris) | `validation/V4-first-article.md` part C; `desktop/bench/V4/v4-repeat-batch.m20` |
+| First-article tags (both modes) photographed and logged with gate reports | open (Chris) | `validation/V4-first-article.md` part B; rehearsal files in `desktop/bench/V4/` |
+| G1, G2, G3, G5, G6, G9, G11 closed; G7 closed or deferred with reason | open (Chris) | `validation/measurements-needed.md` (gap -> sheet -> library field) |
 
 ### M3 Operator app
 
