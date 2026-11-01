@@ -257,6 +257,13 @@ class Runner:
         if busy:
             raise self._refuse(data, report, ack, "a job is already in flight (queue of one)", operator)
 
+        try:
+            return self._run(data, report, ack, operator)
+        finally:
+            with self._lock:
+                self._in_flight = False   # never left stuck, whatever escapes (log I/O, Ctrl-C)
+
+    def _run(self, data: bytes, report: GateReport, ack: str, operator: str | None) -> RunResult:
         code = self.conn.model_code
         started = self.clock()
         self.log.append(log_record("sent", data, report, ack=ack, started=started, operator=operator,
@@ -276,11 +283,17 @@ class Runner:
         if not interrupted and error is None:
             self._et_event.wait(self.settle_s)
         with self._lock:
-            self._in_flight = False
             et, cm, jf, aborted = self._et, list(self._cm), self._jf, self._abort_requested or interrupted
         ended = self.clock()
         status: Status = "aborted" if aborted else ("completed" if et is not None else "unconfirmed")
         extra: dict[str, Any] = {"cm": cm, "jf": jf}
+        if self.conn.model_code != code:
+            # The driver stamps conn.model_code at send time; a late !ID that changed it means the bytes
+            # on the wire may differ from the gated bytes at header 0x24. Never expected with one machine.
+            extra["error"] = (f"connected model code changed during the send ({_hex(code)} -> "
+                              f"{_hex(self.conn.model_code)}): the sent header may differ from the gated bytes")
+            if status == "completed":
+                status = "unconfirmed"
         if error is not None:
             extra["error"] = f"{type(error).__name__}: {error}"
         self.log.append(log_record(status, data, report, ack=ack, started=started, ended=ended, operator=operator,

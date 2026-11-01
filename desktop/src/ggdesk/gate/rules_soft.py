@@ -1,5 +1,7 @@
-"""Soft gate rules S1 to S5 (build plan 9.2). Each finding is a flag the operator must
-acknowledge by typing the count (`I ACCEPT 3 FLAGS`). Rules never modify anything."""
+"""Soft gate rules S1 to S5 (build plan 9.2) and S6 (values not yet run on the machine).
+
+Each finding is a flag the operator must acknowledge by typing the count (`I ACCEPT 3 FLAGS`).
+Rules never modify anything."""
 from __future__ import annotations
 
 from ggdesk import gts_read
@@ -95,4 +97,24 @@ class S5RunTime:
         return []
 
 
-SOFT_RULES = (S1DraftRecipe(), S2CharHeight(), S3NarrowRegions(), S4FixtureTolerance(), S5RunTime())
+class S6Unobserved:
+    id = "S6"
+    severity = Severity.SOFT
+    title = "Setup value never observed on this machine"
+
+    def check(self, data: bytes, job: gts_read.Job, inputs: GateInputs) -> list[Finding]:
+        """H5 holds the value inside the machine range; this flags values outside what was tried on the IQ."""
+        obs = inputs.resolved.machine.observed
+        out: list[Finding] = []
+        for r in job.records:
+            if isinstance(r, gts_read.Segment):
+                break
+            f = obs.get(r.op.lower())
+            if f is not None and f.known and f.value is not None and not f.value.contains(r.arg):
+                out.append(Finding(self.id, self.severity,
+                                   f"{r.op} {r.arg} has not been run on {inputs.resolved.machine.ref.id} "
+                                   f"(observed {f.value.min}..{f.value.max}: {f.ref})", r.offset))
+        return out
+
+
+SOFT_RULES = (S1DraftRecipe(), S2CharHeight(), S3NarrowRegions(), S4FixtureTolerance(), S5RunTime(), S6Unobserved())

@@ -1,16 +1,17 @@
-Gate report  PASS, 2 flag(s) to acknowledge
+Gate report  PASS, 3 flag(s) to acknowledge
 sha256       70894dcfa8d920eff9daac623ec2f282f19c584de6f83e8a6794e83eb21f87c7
 bytes        244
 model code   0x020D
 app          ggdesk 0.1.0
-library      machine:m20-iq v1, tool:rotary-diamond v1, part:bench-scrap-40 v1, fixture:bare-bed v1, recipe:scrap-rotary-diamond-trace v1, material:scrap-aluminum v1
+library      machine:m20-iq v2, tool:rotary-diamond v1, part:bench-scrap-40 v1, fixture:bare-bed v1, recipe:scrap-rotary-diamond-trace v1, material:scrap-aluminum v1
 run time     about 19 s (estimate)
 
 Hard (block): 0
-Soft (flag):  2
+Soft (flag):  3
   S1  recipe scrap-rotary-diamond-trace v1 is draft (not yet validated on the target part)
   S4  fixture bare-bed tolerance not measured (G15): placement error unknown
-To send, type: I ACCEPT 2 FLAGS
+  S6  PZ 100 has not been run on m20-iq (observed 5..50: Rotary diamond cut runs 1-3: PZ 10, 5, 50; spindle probes PZ 10)
+To send, type: I ACCEPT 3 FLAGS
 
 Residual status (always shown):
   Depth is set by hand: nose fitted, knob 5 notches, pressure 2. Software cannot verify these.

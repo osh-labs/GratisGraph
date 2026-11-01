@@ -5,13 +5,13 @@ Status: software complete 2026-11-01; hardware stages V1 and V2 ready, not yet r
 ## Bottom line
 
 Every M1 feature (F03 to F08, F11 schema, F20) is implemented and traced to tests below. The gate has all
-rules H1 to H11 and S1 to S5, each with at least the mutant named in build plan section 9, and accepts its
+rules H1 to H11 and S1 to S5 (plus S6 from the review), each with at least the mutant named in build plan section 9, and accepts its
 known-good corpus 100 %. The bench window builds, gates, previews the decoded bytes and sends through the
 same gated path as the CLI; every send-path test uses a fake connection. Hardware exit items (asymmetric
 test, G4, G10, G15) wait on the operator sheets V1 and V2.
 
 All paths are under `desktop/`. PRs: #7 plan, #8 M1.0 contracts, #10 M1.1 build, #12 M1.2 gate, #9 M1.3
-run, #11 M1.4 bench window, M1.Z integration (this document's PR).
+run, #11 M1.4 bench window, #13 M1.Z integration, and the M1 review-fix PR (`docs/reviews/m1-review.md`).
 
 ## 1. Feature trace
 
@@ -35,13 +35,13 @@ Each mutant test asserts that exactly its rule fires (`tests/unit/test_gate_muta
 |---|---|---|
 | H1 work field | Rapid 0.01 mm past the edge | `test_h1_rapid_past_field_edge`, `test_h1_rapid_past_origin`, `test_h1_field_edges_inclusive` |
 | H2 model code | Job stamped 0x0204 for an IQ | `test_h2_express_code_for_iq`, `test_h2_connected_machine_differs` |
-| H3 framing, single final JF | Two JF; JF before the last stroke | `test_h3_two_jf`, `test_h3_jf_before_last_stroke`, `test_h3_no_jf`, `test_h3_header_byte_changed`, `test_h3_job_does_not_return_home` |
+| H3 framing, single final JF | Two JF; JF before the last stroke | `test_h3_two_jf`, `test_h3_jf_before_last_stroke`, `test_h3_no_jf`, `test_h3_header_byte_changed`, `test_h3_job_does_not_return_home`, `test_h3_jf_argument` |
 | H4 opcode allow-list | Job containing `TO` | `test_h4_opcode_not_allowed` (TO, OU, LB, NR) |
 | H5 setup equals recipe, ranges | `PZ` changed by 1 | `test_h5_pz_changed_by_one`, `test_h5_segment_speed_differs`, `test_h5_mc0_before_return_missing`, `test_h5_speed_change_mid_job`, `test_h5_vd_*`, `test_h5_value_outside_machine_range` |
 | H6 spindle matches tool | Rotary recipe with `MC 0` | `test_h6_rotary_recipe_with_mc0`, `test_h6_drag_tool_with_mc1` |
 | H7 part outline minus margin | Stroke 0.1 mm into the margin | `test_h7_stroke_into_margin`, boundary tests both sides, hole, rounded corner, `test_h7_unmeasured_part`, `test_h7_h8_unmeasured_fixture` |
 | H8 fixture keep-outs | Rapid through a jaw zone | `test_h8_rapid_through_clamp`, `test_h8_keep_out_edge`, `test_h8_per_job_keep_out`, `test_h8_home_rapid_through_jaws` |
-| H9 PU 1 before rapids, block shape, segment fields | `PU 1` removed | `test_h9_pu1_removed_before_rapid`, `test_h9_za_removed`, `test_h9_pu1_replaced_by_pu0`, `test_h9_segment_field_not_observed_value` |
+| H9 PU 1 before rapids, block shape, segment fields | `PU 1` removed | `test_h9_pu1_removed_before_rapid`, `test_h9_za_removed`, `test_h9_pu1_replaced_by_pu0`, `test_h9_segment_field_not_observed_value`, `test_h9_stray_structural_record` |
 | H10 decoded equals intent | One delta altered by 1 unit | `test_h10_one_delta_altered`, `test_h10_no_intent`, `test_h10_stroke_missing_and_extra`, `test_h10_reversed_stroke_accepted` |
 | H11 job size | Oversized job (inactive while G9 open) | `test_h11_inactive_while_unmeasured`, `test_h11_oversized` |
 | S1 draft recipe | Draft recipe | `test_s1_draft_recipe` |
@@ -49,6 +49,7 @@ Each mutant test asserts that exactly its rule fires (`tests/unit/test_gate_muta
 | S3 narrow regions | Hairline region | `test_s3_one_flag_per_narrow_region` (fill produces them in M2) |
 | S4 fixture tolerance | Null tolerance | `test_s4_fixture_tolerance_unknown` |
 | S5 run time | Long job | `test_s5_long_fill`, `test_s5_limit_boundary` |
+| S6 value not run on this machine (added by the M1 review) | `PZ` 51 / 80 on the IQ | `test_s6_value_not_run_on_this_machine` |
 | Home job | Driver's fixed home job | `tests/unit/test_gate_home.py` |
 | Decode | Unexplained bytes | `test_gate_contract.py::test_decode_failure_is_hard`, `test_gts_read.py` |
 

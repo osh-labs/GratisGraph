@@ -93,7 +93,7 @@ def test_vd_job_has_vd_in_setup() -> None:
 
 def test_rules_in_id_order() -> None:
     ids = [r.id for r in RULES]
-    assert ids == [f"H{i}" for i in range(1, 12)] + [f"S{i}" for i in range(1, 6)]
+    assert ids == [f"H{i}" for i in range(1, 12)] + [f"S{i}" for i in range(1, 7)]
     assert all(r.severity is (Severity.HARD if r.id[0] == "H" else Severity.SOFT) for r in RULES)
     assert all(r.title for r in RULES)
 

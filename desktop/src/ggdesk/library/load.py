@@ -270,9 +270,17 @@ def _machine(doc: Mapping[str, Any], ref: EntryRef, c: _Ctx) -> Machine:
     send_enabled = doc.get("send_enabled", False)
     if not isinstance(send_enabled, bool):
         raise EntryError("send_enabled must be true or false")
+    obs_doc = _sub(doc, "observed")
+    observed = {k: c.fact(obs_doc, k, _range, label=f"observed.{k}") for k in sorted(obs_doc)}
+    for k, f in observed.items():
+        r = ranges.get(k)
+        if r is None or not r.known or f.value is None or r.value is None:
+            continue
+        if f.value.min < r.value.min or f.value.max > r.value.max:
+            raise EntryError(f"observed.{k} {f.value.min}..{f.value.max} lies outside ranges.{k}")
     return Machine(ref, _name(doc), c.fact(doc, "model_code", _int, hard=True), send_enabled,
                    c.fact(doc, "work_field_mm", _pair, hard=True), tuple(allowed), tuple(reserved),
-                   ranges, completion, c.fact(doc, "max_job_bytes", _int, hard=True))
+                   ranges, completion, c.fact(doc, "max_job_bytes", _int, hard=True), observed)
 
 
 def _tool(doc: Mapping[str, Any], ref: EntryRef, c: _Ctx) -> Tool:

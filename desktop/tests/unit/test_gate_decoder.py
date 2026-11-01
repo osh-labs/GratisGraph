@@ -84,7 +84,7 @@ def test_moves_mark_pen_state() -> None:
 
 
 @pytest.mark.parametrize("tail", [b"\xff", b"\xff\xfd\x00\x01\x00\x00", b"\x00" * 7])
-def test_still_refuses_unexplained_bytes(tail: bytes) -> None:
+def test_decoder_refuses_truncation_and_non_ascii_opcodes(tail: bytes) -> None:
     data = gts_api.build_gts([(100, 200, [(50, 0)])], speed=10)
     with pytest.raises(GtsFormatError):
         read_job(data + tail)

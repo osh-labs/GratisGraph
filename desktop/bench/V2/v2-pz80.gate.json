@@ -4,8 +4,8 @@
     {
       "id": "m20-iq",
       "kind": "machine",
-      "sha256": "d6cd7282c8d055743cc4681a4a735508e746ed92cc7bcaac25776dd476f64bc0",
-      "version": 1
+      "sha256": "060b5e3b2f339b3a4254abac0392992bbd2fc174d516ca70a3de3d3d96421825",
+      "version": 2
     },
     {
       "id": "rotary-diamond",
@@ -51,9 +51,15 @@
       "offset": null,
       "rule": "S4",
       "severity": "soft"
+    },
+    {
+      "message": "PZ 80 has not been run on m20-iq (observed 5..50: Rotary diamond cut runs 1-3: PZ 10, 5, 50; spindle probes PZ 10)",
+      "offset": 118,
+      "rule": "S6",
+      "severity": "soft"
     }
   ],
-  "flags": 2,
+  "flags": 3,
   "format": "gratisgraph-gate-report",
   "job_sha256": "4b53a34a8197d25f75fe368a313abd7b210d89f4d4252a6e00080f8fd8bb7020",
   "model_code": 525,
@@ -86,7 +92,8 @@
     "S2",
     "S3",
     "S4",
-    "S5"
+    "S5",
+    "S6"
   ],
   "selection": {
     "extra_keep_outs": [],

@@ -42,7 +42,7 @@ def built(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Path, 
 
 def test_rules_are_live() -> None:
     ids = [r.id for r in gate.RULES]
-    assert ids == [f"H{i}" for i in range(1, 12)] + [f"S{i}" for i in range(1, 6)]
+    assert ids == [f"H{i}" for i in range(1, 12)] + [f"S{i}" for i in range(1, 7)]
 
 
 def test_build_check_send(built: tuple[Path, Path, list[FakeConn]], tmp_path: Path) -> None:
@@ -91,3 +91,30 @@ def test_gui_session_sends_through_the_real_runner(built: tuple[Path, Path, list
     assert res.status == "completed" and res.et == 24
     assert conns[-1].sent[1] == m20.read_bytes()
     assert JobLog().records()[-1]["operator"] == "bench"
+
+
+def test_session_reports_invalid_library_entries(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    from ggdesk_app.session import BenchSession
+
+    tools = tmp_path / "user" / "tools"
+    tools.mkdir(parents=True)
+    (tools / "broken.toml").write_text('schema_version = 1\nkind = "tool"\nid = "broken"\nversion = 1\n',
+                                       encoding="utf-8")
+    monkeypatch.setenv("GGDESK_USER_LIBRARY", str(tmp_path / "user"))
+    s = BenchSession()
+    assert "1 library entry is invalid" in s.state.status and "broken.toml" in s.state.status
+
+
+def test_session_runner_follows_the_reports_machine(built: tuple[Path, Path, list[FakeConn]]) -> None:
+    from ggdesk.library import Selection
+    from ggdesk_app.session import BenchSession
+
+    s = BenchSession()
+    s.open_job(JOB)
+    s.select(Selection(recipe="scrap-rotary-diamond-trace"))
+    s.build_and_gate()
+    s.send("I ACCEPT 2 FLAGS")
+    assert s.runner is not None and s.runner.machine.ref.id == "m20-iq"
+    s.runner.machine = None                  # stale state from an earlier selection is replaced on send
+    s.send("I ACCEPT 2 FLAGS")
+    assert s.runner.machine is not None and s.runner.machine.ref.id == "m20-iq"

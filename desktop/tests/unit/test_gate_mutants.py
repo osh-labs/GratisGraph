@@ -134,6 +134,23 @@ def test_h9_segment_field_not_observed_value(field: str) -> None:
     _only(Case(replace_record(c.data, s0, rec), c.inputs), "H9")
 
 
+@pytest.mark.parametrize("extra", ["PU 300 between strokes", "PU 1 between strokes", "ZA 1 before home"])
+def test_h9_stray_structural_record(extra: str) -> None:
+    c = case(F_ARROW)
+    pu1 = nth_command(c.data, "PU", 0, arg=1)
+    rec = {"PU 300 between strokes": cmd("PU", 300), "PU 1 between strokes": cmd("PU", 1),
+           "ZA 1 before home": cmd("ZA", 1)}[extra]
+    data = insert(c.data, end_of(pu1), rec)
+    rep = Case(data, c.inputs).gate()
+    assert fired(rep) == {"H9"}, rep.to_text()
+    assert any("record grammar" in f.message for f in rep.findings)
+
+
+def test_h3_jf_argument() -> None:
+    c = case(SQUARE)
+    _only(Case(c.data[:-2] + (999).to_bytes(2, "big"), c.inputs), "H3")
+
+
 # --- H4 opcode allow-list -----------------------------------------------------------------------
 
 @pytest.mark.parametrize("op", ["TO", "LB", "NR", "OU"])
@@ -151,7 +168,8 @@ def test_h4_opcode_not_allowed(op: str) -> None:
 def test_h5_pz_changed_by_one() -> None:
     c = case(SQUARE)
     pz = nth_command(c.data, "PZ")
-    _only(Case(replace_record(c.data, pz, cmd("PZ", 51)), c.inputs), "H5")
+    # 49, not 51: 51 is also outside the values run on the IQ (5..50), which S6 flags separately.
+    _only(Case(replace_record(c.data, pz, cmd("PZ", 49)), c.inputs), "H5")
 
 
 def test_h5_segment_speed_differs() -> None:
@@ -189,11 +207,25 @@ def test_h5_value_outside_machine_range() -> None:
     for pz, ok in ((100, True), (101, False)):
         inputs = replace(base, resolved=replace(base.resolved, recipe=replace(rec, pz=Fact(pz, confidence="DEFINED"))))
         c = Case(build_bytes(SQUARE, inputs), inputs)
-        if ok:
-            _clean(c)
-        else:
-            _only(c, "H5")
-            assert "outside the machine range 0..100" in c.gate().findings[0].message
+        rep = c.gate()
+        # PZ 100 and 101 were never run on the IQ (observed 5..50): S6 flags both; H5 refuses 101.
+        assert fired(rep) == ({"S6"} if ok else {"H5", "S6"}), rep.to_text()
+        assert rep.passed is ok
+        if not ok:
+            assert "outside the machine range 0..100" in rep.findings[0].message
+
+
+@pytest.mark.parametrize(("pz", "flag"), [(5, False), (50, False), (4, True), (51, True), (80, True)])
+def test_s6_value_not_run_on_this_machine(pz: int, flag: bool) -> None:
+    base = make_inputs(SQUARE)
+    rec = base.resolved.recipe
+    inputs = replace(base, resolved=replace(base.resolved, recipe=replace(rec, pz=Fact(pz, confidence="DEFINED"))))
+    c = Case(build_bytes(SQUARE, inputs), inputs)
+    if flag:
+        _only(c, "S6")
+        assert f"PZ {pz} has not been run on m20-iq" in c.gate().findings[0].message
+    else:
+        _clean(c)
 
 
 # --- H6 spindle ---------------------------------------------------------------------------------

@@ -3,7 +3,7 @@ sha256       2bb9335e3db7e940068d3553b36f281cdca41675ce5bc2117d889d13c1170413
 bytes        1684
 model code   0x020D
 app          ggdesk 0.1.0
-library      machine:m20-iq v1, tool:rotary-diamond v1, part:bench-scrap-40 v1, fixture:bare-bed v1, recipe:scrap-rotary-diamond-trace v1, material:scrap-aluminum v1
+library      machine:m20-iq v2, tool:rotary-diamond v1, part:bench-scrap-40 v1, fixture:bare-bed v1, recipe:scrap-rotary-diamond-trace v1, material:scrap-aluminum v1
 run time     about 148 s (estimate)
 
 Hard (block): 0
