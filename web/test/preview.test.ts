@@ -28,7 +28,7 @@ function close(a: number, b: number): boolean { return Math.abs(a - b) < 1e-9; }
 
 for (const [name, c] of Object.entries(fx.cases)) {
   test(`parseGts matches Python: ${name}`, () => {
-    const data = new Uint8Array(readFileSync(join(here, 'fixtures', 'm20', `${name}.m20`)));
+    const data = new Uint8Array(readFileSync(join(here, '..', '..', 'tests', 'golden', c.file)));
     const got = parseGts(data);
     assert.equal(got.strokes.length, c.strokes.length, 'stroke count');
     for (let i = 0; i < c.strokes.length; i++) {

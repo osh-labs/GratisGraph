@@ -1,0 +1,32 @@
+# Packaging for the GratisGraph Python driver (the flat modules at the repo
+# root). Lets other projects, such as desktop/, depend on the driver with
+# `pip install -e .` instead of path hacks. The modules themselves are
+# unchanged and still run as scripts (`python3 gts_ctl.py ...`).
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gratisgraph"
+version = "0.1.0"
+description = "Open-source GTS driver for Gravograph M20-series contact engravers"
+readme = "README.md"
+license = "GPL-3.0-or-later"
+requires-python = ">=3.10"
+dependencies = ["pyusb>=1.2"]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[project.scripts]
+gts-ctl = "gts_ctl:main"
+
+[tool.setuptools]
+py-modules = [
+    "gts_api", "gts_translator", "gts_optimise", "gts_prepare", "gts_preview",
+    "gts_server", "gts_capture", "gts_ctl", "gts_probe", "console", "calibrate",
+    "version",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
