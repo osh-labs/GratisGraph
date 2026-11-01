@@ -34,16 +34,16 @@ Input format support:
 """
 
 import re
+import warnings
 from typing import Tuple, Optional
 
 from gts_api import (
     MachineProfile, M20_PROFILE,
     UNITS_PER_MM, WORK_ENVELOPE_MM, PHYSICAL_ENVELOPE_MM,
     build_gts, build_home_gts, build_square, build_circle,
-    DEFAULT_SPEED, DEFAULT_DEPTH, DEFAULT_LIFT,
+    DEFAULT_SPEED, DEFAULT_PZ, DEFAULT_DZ, MC_OFF,
 )
 
-__version__ = '0.1.0'
 from gts_translator import GCodeParser, gcode_to_strokes
 from gts_optimise import optimise_strokes
 
@@ -64,14 +64,43 @@ __all__ = [
 # Job preparation
 # ---------------------------------------------------------------------------
 
+def _resolve_pz_dz(pz: Optional[int], dz: Optional[int],
+                   depth: Optional[int], lift: Optional[int]) -> Tuple[int, int]:
+    """
+    Map the deprecated depth/lift names onto PZ/DZ. They were labelled the
+    wrong way round: `depth` set DZ (Z clearance) and `lift` set PZ (the
+    engraving depth value, GTS_FORMAT.md §5.3). The old mapping is kept so
+    existing callers get the same bytes; new code passes pz/dz.
+    """
+    if depth is not None:
+        if dz is not None:
+            raise ValueError('pass dz or the deprecated depth, not both')
+        warnings.warn('depth= is deprecated: it sets DZ (Z clearance); use dz=',
+                      DeprecationWarning, stacklevel=3)
+        dz = depth
+    if lift is not None:
+        if pz is not None:
+            raise ValueError('pass pz or the deprecated lift, not both')
+        warnings.warn('lift= is deprecated: it sets PZ (engraving depth); use pz=',
+                      DeprecationWarning, stacklevel=3)
+        pz = lift
+    return (DEFAULT_PZ if pz is None else pz,
+            DEFAULT_DZ if dz is None else dz)
+
+
 def from_gcode(
     gcode_text:   str,
     origin:       Tuple[float, float] = (0.0, 0.0),
     flip_y:       bool                = False,
     scale:        float               = 1.0,
     speed:        int                 = DEFAULT_SPEED,
-    depth:        int                 = DEFAULT_DEPTH,
-    lift:         int                 = DEFAULT_LIFT,
+    pz:           Optional[int]       = None,
+    dz:           Optional[int]       = None,
+    mc:           int                 = MC_OFF,
+    vz:           Optional[int]       = None,
+    vd:           Optional[int]       = None,
+    depth:        Optional[int]       = None,
+    lift:         Optional[int]       = None,
     arc_steps:    int                 = 72,
     units:        str                 = 'mm',
     profile:      MachineProfile      = M20_PROFILE,
@@ -90,7 +119,12 @@ def from_gcode(
     optimise           -- enable toolpath optimisation (default True)
     merge              -- enable stroke merging (default True)
     merge_tolerance_mm -- merge gap threshold in mm (default 0.1)
+    pz, dz, mc, vz, vd -- GTS setup values (see gts_api.build_gts). pz is the
+                          engraving depth value, dz the Z clearance.
+    depth, lift        -- deprecated names with the old, wrong labels:
+                          depth set DZ and lift set PZ. Still honoured.
     """
+    pz, dz = _resolve_pz_dz(pz, dz, depth, lift)
     # Envelope override: explicit envelope_mm wins over the profile default
     env = envelope_mm if envelope_mm is not None else profile.envelope_mm
 
@@ -128,7 +162,7 @@ def from_gcode(
             units_per_mm=profile.units_per_mm,
         )
 
-    return build_gts(strokes, speed=speed, pz=lift, dz=depth)
+    return build_gts(strokes, speed=speed, pz=pz, dz=dz, mc=mc, vz=vz, vd=vd)
 
 
 def from_file(
@@ -137,8 +171,13 @@ def from_file(
     flip_y:       bool                = False,
     scale:        float               = 1.0,
     speed:        int                 = DEFAULT_SPEED,
-    depth:        int                 = DEFAULT_DEPTH,
-    lift:         int                 = DEFAULT_LIFT,
+    pz:           Optional[int]       = None,
+    dz:           Optional[int]       = None,
+    mc:           int                 = MC_OFF,
+    vz:           Optional[int]       = None,
+    vd:           Optional[int]       = None,
+    depth:        Optional[int]       = None,
+    lift:         Optional[int]       = None,
     arc_steps:    int                 = 72,
     profile:      MachineProfile      = M20_PROFILE,
     optimise:     bool                = True,
@@ -161,6 +200,11 @@ def from_file(
         flip_y=flip_y,
         scale=scale,
         speed=speed,
+        pz=pz,
+        dz=dz,
+        mc=mc,
+        vz=vz,
+        vd=vd,
         depth=depth,
         lift=lift,
         arc_steps=arc_steps,
@@ -179,16 +223,19 @@ def square(
     side_mm:      float          = 50.0,
     scale:        float          = 1.0,
     speed:        int            = DEFAULT_SPEED,
-    depth:        int            = DEFAULT_DEPTH,
+    dz:           Optional[int]  = None,
     profile:      MachineProfile = M20_PROFILE,
+    depth:        Optional[int]  = None,
 ) -> bytes:
-    """Build a GTS binary for a square, with optional scale."""
+    """Build a GTS binary for a square, with optional scale. depth= is the
+    deprecated name for dz=."""
+    _, dz = _resolve_pz_dz(None, dz, depth, None)
     return build_square(
         centre_x_mm=centre_x_mm,
         centre_y_mm=centre_y_mm,
         side_mm=side_mm * scale,
         speed=speed,
-        dz=depth,
+        dz=dz,
     )
 
 
@@ -199,17 +246,20 @@ def circle(
     scale:        float          = 1.0,
     steps:        int            = 72,
     speed:        int            = DEFAULT_SPEED,
-    depth:        int            = DEFAULT_DEPTH,
+    dz:           Optional[int]  = None,
     profile:      MachineProfile = M20_PROFILE,
+    depth:        Optional[int]  = None,
 ) -> bytes:
-    """Build a GTS binary for a circle, with optional scale."""
+    """Build a GTS binary for a circle, with optional scale. depth= is the
+    deprecated name for dz=."""
+    _, dz = _resolve_pz_dz(None, dz, depth, None)
     return build_circle(
         centre_x_mm=centre_x_mm,
         centre_y_mm=centre_y_mm,
         radius_mm=radius_mm * scale,
         steps=steps,
         speed=speed,
-        dz=depth,
+        dz=dz,
     )
 
 

@@ -45,6 +45,11 @@ CASES = {
                                                        'optimise': False}),
     'speed_40':            ('line_single.gc',         {'speed': 40,
                                                        'optimise': False}),
+    # Rotary setup (M20 IQ rotary diamond, 2026-10-29): spindle on, own Z
+    # speed and plunge speed. Setup values are those of the clean cut.
+    'rotary_square_20mm':  ('square_20mm.gc',         {'speed': 10, 'pz': 50,
+                                                       'mc': 1, 'vz': 5,
+                                                       'vd': 15}),
 }
 
 
