@@ -1,0 +1,20 @@
+{
+  "cases": {
+    "asymmetric_f_arrow": {
+      "bytes": 622,
+      "sha256": "65a91013af7a9b54853d9c5208d12a03be2cd7c51f9b889a8c38313e366d95bc"
+    },
+    "multi_stroke": {
+      "bytes": 670,
+      "sha256": "19606635672897b75d2e4374e7f195124373661a9295ce48a6b3c609c4f9a467"
+    },
+    "square_10mm": {
+      "bytes": 244,
+      "sha256": "353fdefbf485d12040698a752203897eeedead70fc1a23c6ba98f66dc7fa816a"
+    },
+    "square_10mm_pz80": {
+      "bytes": 244,
+      "sha256": "223a28066e237d7c5fe21a933356d1f9d02b1fd6814034dd59a7a4d1ede9b4c0"
+    }
+  }
+}

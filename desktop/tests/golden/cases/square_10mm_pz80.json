@@ -1,0 +1,14 @@
+{
+  "job": "docs/examples/square-10mm.ggj",
+  "note": "Bench override pz=80 on the draft recipe (V2 PZ sweep shape)",
+  "selection": {
+    "extra_keep_outs": [],
+    "fixture": "bare-bed",
+    "machine": "m20-iq",
+    "nest": "centre",
+    "overrides": {
+      "pz": 80
+    },
+    "recipe": "scrap-rotary-diamond-trace"
+  }
+}

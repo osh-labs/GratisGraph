@@ -1,0 +1,12 @@
+{
+  "job": "docs/examples/asymmetric-f-arrow.ggj",
+  "note": "Orientation lock: F, crosshair, +X and +Y arrows (V1 pattern)",
+  "selection": {
+    "extra_keep_outs": [],
+    "fixture": "bare-bed",
+    "machine": "m20-iq",
+    "nest": "centre",
+    "overrides": {},
+    "recipe": "scrap-rotary-diamond-trace"
+  }
+}
